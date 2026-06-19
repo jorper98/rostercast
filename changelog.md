@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.0.2
+- Added `scripts/package-for-deploy.ps1` for orchestrating releases via git tags.
+- Added GitHub Actions workflow (`.github/workflows/docker-publish.yml`) to build and publish Docker image to GHCR on `v*` tag push.
+- Bumped version to v2.0.2 across `package.json`, `README.md`, `docs.md`, and `public/About.md`.
+
 ## v2.0.1
 - Improved welcome email template with professional HTML design (gradient header, CTA button, responsive layout).
 - Added "Group Updates and News" email template with categorized news cards layout.

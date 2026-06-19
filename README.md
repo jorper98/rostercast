@@ -1,4 +1,7 @@
-# RosterCast Public Directory
+# RosterCast 
+
+## Version: v2.0.2
+
 
 ## Description
 
@@ -22,13 +25,12 @@ With RosterCast, you can:
 
 RosterCast focuses on simplicity: organize people, reach the right audience, and communicate without the complexity of a traditional CRM.
 
-Version: v2.0.1
 
 ## Application  Website
 to Review Applicaiton Information go to  
 https://35sites.com/rostercast 
 
-## Usage
+## Usage Local Dev 
 
 1. Install dependencies:
    ```bash
@@ -88,7 +90,7 @@ Run with Docker Compose:
 docker-compose -f docker-compose-production.yml up -d --build
 ```
 
-## Public Read-Only Behavior
+## Public  Behavior (Read-Only)
 
 - Public visitors can view approved member directory entries.
 - Public visitors can use the member map.
@@ -114,10 +116,12 @@ docker-compose -f docker-compose-production.yml up -d --build
 
 ## Security Notes
 
-- Do not commit `.env` files.
+- Keep in mind End User Privacy.  Use the USER_PASSWORD to Enable basic site protection
 - Replace the placeholder admin password before deploying.
-- Do not restore private backups or private email logs into this public version.
-- Review the sanitized member data before publishing.
+- The `ADMIN_PASSWORD` environment variable overrides `data/config.json` for admin maintenance access.   
+- The `USER_PASSWORD` environment variable overrides `data/config.json` for basic site protection.
+
+
 
 ## License
 

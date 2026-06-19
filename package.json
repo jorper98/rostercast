@@ -1,6 +1,6 @@
 {
   "name": "rostercast",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "RosterCast member directory web app",
   "main": "server.js",
   "docker": {

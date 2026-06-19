@@ -1,4 +1,4 @@
-# RosterCast v2.0.1
+# RosterCast v2.0.2
 
 ## Description
 This is the public read-only directory for the RosterCast application.
