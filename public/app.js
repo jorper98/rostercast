@@ -50,6 +50,9 @@ let appVersion = null; // Fetched from server on init
 let bulkRecipients = [];
 let bulkSelectedIds = new Set();
 
+// Member email history state
+let currentMemberEmailLogs = [];
+
 // ==========================================
 // AUTHENTICATION FUNCTIONS
 // ==========================================
@@ -385,6 +388,10 @@ function setupEventListeners() {
     
     // Bulk email event listeners
     setupBulkEmailListeners();
+
+    // Tag autocomplete on member form
+    setupTagAutocomplete();
+    resetMemberTagChips();
 }
 
 // API Functions
@@ -398,6 +405,7 @@ async function loadMembers() {
         }
         const data = await response.json();
         members = Array.isArray(data) ? data : [];
+        invalidateTagCache();
         applySortAndFilter();
         renderTagFilter();
     } catch (error) {
@@ -426,12 +434,11 @@ function applySortAndFilter() {
             (m.first_name && m.first_name.toLowerCase().includes(searchQuery)) ||
             (m.last_name && m.last_name.toLowerCase().includes(searchQuery)) ||
             (m.email && m.email.toLowerCase().includes(searchQuery)) ||
-            (m.club && m.club.toLowerCase().includes(searchQuery)) ||
             (m.city && m.city.toLowerCase().includes(searchQuery)) ||
             (m.address && m.address.toLowerCase().includes(searchQuery)) ||
-            (m.fromarea && m.fromarea.toLowerCase().includes(searchQuery)) ||
             (m.twg_subgroups && m.twg_subgroups.toLowerCase().includes(searchQuery)) ||
-            (m.tags && Array.isArray(m.tags) && m.tags.some(tag => tag.toLowerCase().includes(searchQuery)))
+            (m.tags && Array.isArray(m.tags) && m.tags.some(tag => tag.toLowerCase().includes(searchQuery))) ||
+            (isAdmin() && m.notes && m.notes.toLowerCase().includes(searchQuery))
         );
     }
     
@@ -465,16 +472,9 @@ function applySortAndFilter() {
 
 function renderTagFilter() {
     const tagFilterContainer = document.getElementById('tagFilter');
-    if (!tagFilterContainer) return; // Skip if element doesn't exist (e.g., on tools page)
+    if (!tagFilterContainer) return;
     
-    const allTags = new Set();
-    members.forEach(m => {
-        if (m.tags && Array.isArray(m.tags)) {
-            m.tags.forEach(tag => allTags.add(tag));
-        }
-    });
-    
-    const sortedTags = Array.from(allTags).sort();
+    const sortedTags = getExistingTags();
     
     if (sortedTags.length === 0) {
         tagFilterContainer.innerHTML = '';
@@ -493,6 +493,162 @@ function filterByTag(tag) {
     activeTagFilter = tag;
     applySortAndFilter();
     renderTagFilter();
+}
+
+// ========================================
+// TAG AUTOCOMPLETE (MEMBER FORM)
+// ========================================
+let selectedMemberTags = [];
+let tagSuggestionIdx = -1;
+let cachedExistingTags = null;
+
+function getExistingTags() {
+    if (cachedExistingTags) return cachedExistingTags;
+    const set = new Set();
+    members.forEach(m => {
+        if (m.tags && Array.isArray(m.tags)) {
+            m.tags.forEach(t => set.add(t));
+        }
+    });
+    cachedExistingTags = Array.from(set).sort();
+    return cachedExistingTags;
+}
+
+function invalidateTagCache() {
+    cachedExistingTags = null;
+}
+
+function renderMemberTagChips() {
+    const container = document.getElementById('tagChips');
+    if (!container) return;
+    container.innerHTML = selectedMemberTags.map((tag, idx) => `
+        <span class="tag-chip">
+            <span>${escapeHtml(tag)}</span>
+            <span class="tag-chip-remove" onclick="removeSelectedTag(${idx})" title="Remove ${escapeHtml(tag)}">&times;</span>
+        </span>
+    `).join('');
+    document.getElementById('memberTags').value = selectedMemberTags.join(',');
+}
+
+function addSelectedTag(raw) {
+    const tag = raw.trim().toLowerCase().replace(/\s+/g, '');
+    if (!tag) return;
+    if (selectedMemberTags.some(t => t === tag)) return;
+    selectedMemberTags.push(tag);
+    renderMemberTagChips();
+}
+
+function removeSelectedTag(idx) {
+    selectedMemberTags.splice(idx, 1);
+    renderMemberTagChips();
+}
+
+function updateTagSuggestions(query) {
+    const box = document.getElementById('tagSuggestions');
+    if (!box) return;
+    if (!query) { box.style.display = 'none'; return; }
+    
+    const existing = getExistingTags().filter(t => t.includes(query.toLowerCase()) && !selectedMemberTags.includes(t));
+    tagSuggestionIdx = -1;
+    
+    let html = '';
+    if (existing.length > 0) {
+        html += existing.map((t, i) =>
+            `<div class="tag-suggestion" data-index="${i}" onmousedown="pickTagSuggestion('${escapeHtml(t)}')">${escapeHtml(t)}</div>`
+        ).join('');
+    }
+    if (!selectedMemberTags.includes(query.toLowerCase().replace(/\s+/g, ''))) {
+        html += `<div class="tag-suggestion" data-new="1" onmousedown="pickTagSuggestion('${escapeHtml(query.toLowerCase().replace(/\s+/g, ''))}')">Create "<strong>${escapeHtml(query)}</strong>" <span class="tag-suggestion-new-label">NEW</span></div>`;
+    }
+    
+    box.innerHTML = html;
+    box.style.display = html ? 'block' : 'none';
+}
+
+function pickTagSuggestion(tag) {
+    addSelectedTag(tag);
+    closeTagSuggestions();
+    const inp = document.getElementById('tags');
+    if (inp) { inp.value = ''; inp.focus(); }
+}
+
+function closeTagSuggestions() {
+    const box = document.getElementById('tagSuggestions');
+    if (box) box.style.display = 'none';
+    tagSuggestionIdx = -1;
+}
+
+function tagInputKeydown(e) {
+    const box = document.getElementById('tagSuggestions');
+    if (!box) return;
+    const items = box.querySelectorAll('.tag-suggestion');
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        tagSuggestionIdx = tagSuggestionIdx < items.length - 1 ? tagSuggestionIdx + 1 : -1;
+        items.forEach((it, i) => it.classList.toggle('active', i === tagSuggestionIdx));
+        // scroll into view
+        if (tagSuggestionIdx >= 0 && items[tagSuggestionIdx]) items[tagSuggestionIdx].scrollIntoView({ block: 'nearest' });
+        return;
+    }
+    
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        tagSuggestionIdx = tagSuggestionIdx > 0 ? tagSuggestionIdx - 1 : items.length - 1;
+        items.forEach((it, i) => it.classList.toggle('active', i === tagSuggestionIdx));
+        if (tagSuggestionIdx >= 0 && items[tagSuggestionIdx]) items[tagSuggestionIdx].scrollIntoView({ block: 'nearest' });
+        return;
+    }
+    
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        if (tagSuggestionIdx >= 0 && items[tagSuggestionIdx]) {
+            const val = items[tagSuggestionIdx].getAttribute('data-new') === '1'
+                ? items[tagSuggestionIdx].textContent.split('"')[1]
+                : items[tagSuggestionIdx].textContent.trim();
+            pickTagSuggestion(val);
+        } else {
+            // treat current input as a new tag
+            const inp = e.target;
+            if (inp.value.trim()) {
+                addSelectedTag(inp.value);
+                inp.value = '';
+                closeTagSuggestions();
+            }
+        }
+        return;
+    }
+    
+    if (e.key === 'Escape') {
+        closeTagSuggestions();
+        return;
+    }
+    
+    if (e.key === 'Backspace' && !e.target.value && selectedMemberTags.length > 0) {
+        e.preventDefault();
+        removeSelectedTag(selectedMemberTags.length - 1);
+    }
+}
+
+function setupTagAutocomplete() {
+    const inp = document.getElementById('tags');
+    if (!inp) return;
+    
+    inp.addEventListener('input', () => {
+        updateTagSuggestions(inp.value);
+    });
+    
+    inp.addEventListener('keydown', tagInputKeydown);
+    
+    inp.addEventListener('blur', () => {
+        // Use setTimeout so mousedown on suggestion fires before blur
+        setTimeout(closeTagSuggestions, 150);
+    });
+}
+
+function resetMemberTagChips() {
+    selectedMemberTags = [];
+    renderMemberTagChips();
 }
 
 async function loadTemplates() {
@@ -1474,14 +1630,6 @@ async function clearErrorLog() {
     }
 }
 
-// Show error log section if admin
-function showErrorLogSection() {
-    const section = document.getElementById('errorLogSection');
-    if (section && isAdmin()) {
-        section.style.display = 'block';
-    }
-}
-
 function showSettingsModal() {
     if (!config) return;
     
@@ -1544,14 +1692,14 @@ async function saveMember() {
         state: document.getElementById('state').value,
         zip: document.getElementById('zip').value,
         phone: document.getElementById('phone').value,
-        phone_2: document.getElementById('phone_2').value,
-        club: document.getElementById('club').value,
-        fromarea: document.getElementById('fromarea').value,
         mailing_list: document.getElementById('mailing_list').value,
-        fulltime_parttime: document.getElementById('fulltime_parttime').value,
         approved: document.getElementById('approved').value,
-        tags: document.getElementById('tags').value.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g, '')).filter(t => t)
+        tags: selectedMemberTags.slice()
     };
+
+    if (isAdmin()) {
+        memberData.notes = document.getElementById('notes').value;
+    }
     
     // Check if coordinates were updated via geocoding
     const coordsField = document.getElementById('coordinatesJson');
@@ -1691,7 +1839,6 @@ async function sendWelcomeEmailToMember(member, templateId) {
     body = body.replace(/{{first_name}}/g, member.first_name || '');
     body = body.replace(/{{last_name}}/g, member.last_name || '');
     body = body.replace(/{{email}}/g, member.email || '');
-    body = body.replace(/{{club}}/g, member.club || '');
     subject = subject.replace(/{{first_name}}/g, member.first_name || '');
     subject = subject.replace(/{{last_name}}/g, member.last_name || '');
     
@@ -1968,24 +2115,20 @@ function renderMembers(membersList) {
     }
     
     // Get table fields from config, with defaults
-    const tableFields = config?.tableFields || ['first_name', 'last_name', 'email', 'phone', 'approved', 'fromarea', 'tags'];
+    const tableFields = config?.tableFields || ['first_name', 'last_name', 'email', 'phone', 'approved', 'tags'];
     
     // Field label mapping
     const fieldLabels = {
         last_name: 'Last Name',
         first_name: 'First Name',
         address: 'Address',
-        fromarea: 'From Area',
-        fulltime_parttime: 'Full/Part Time',
         email: 'Email',
         phone: 'Phone',
         approved: 'Approved',
         tags: 'Tags',
-        club: 'Club',
         city: 'City',
         state: 'State',
         zip: 'Zip',
-        phone_2: 'Phone 2',
         mailing_list: 'Mailing List',
         twg_subgroups: 'Subgroups'
     };
@@ -2102,7 +2245,11 @@ function showAddMemberModal() {
     document.getElementById('modalTitle').textContent = 'Add New Member';
     document.getElementById('memberForm').reset();
     document.getElementById('memberId').value = '';
-    
+    resetMemberTagChips();
+
+    const notesGroup = document.getElementById('notesGroup');
+    if (notesGroup) notesGroup.style.display = isAdmin() ? 'block' : 'none';
+
     // Reset original approved value for new member
     originalApprovedValue = null;
     
@@ -2125,14 +2272,19 @@ function showEditMemberModal(member) {
     document.getElementById('state').value = member.state || '';
     document.getElementById('zip').value = member.zip || '';
     document.getElementById('phone').value = member.phone || '';
-    document.getElementById('phone_2').value = member.phone_2 || '';
-    document.getElementById('club').value = member.club || '';
-    document.getElementById('fromarea').value = member.fromarea || '';
     document.getElementById('mailing_list').value = member.mailing_list || '';
-    document.getElementById('fulltime_parttime').value = member.fulltime_parttime || '';
     document.getElementById('approved').value = member.approved || '';
-    document.getElementById('tags').value = (member.tags || []).join(', ');
-    
+    selectedMemberTags = Array.isArray(member.tags) ? [...member.tags] : [];
+    document.getElementById('tags').value = '';
+    document.getElementById('memberTags').value = selectedMemberTags.join(',');
+    renderMemberTagChips();
+
+    const notesGroup = document.getElementById('notesGroup');
+    if (notesGroup) {
+        notesGroup.style.display = isAdmin() ? 'block' : 'none';
+        document.getElementById('notes').value = isAdmin() ? (member.notes || '') : '';
+    }
+
     // Store the original approved value to detect changes
     originalApprovedValue = member.approved;
     
@@ -2193,6 +2345,7 @@ function viewMember(id) {
     
     // Edit and Email buttons only for admin
     if (isAdmin()) {
+        actionButtons += '<button type="button" class="btn btn-secondary" onclick="showMemberEmailHistory(' + member.id + ')">📧 Email History</button>';
         actionButtons += '<button type="button" class="btn btn-primary" id="sendWelcomeBtn">Send Email</button>';
         actionButtons += '<button type="button" class="btn btn-edit" onclick="editCurrentMember()">Edit</button>';
     }
@@ -2208,7 +2361,7 @@ function viewMember(id) {
         </div>
         <div class="detail-row">
             <span class="detail-label">Phone:</span>
-            <span class="detail-value">${escapeHtml(member.phone || 'N/A')}${member.phone_2 ? ' / ' + escapeHtml(member.phone_2) : ''}</span>
+            <span class="detail-value">${escapeHtml(member.phone || 'N/A')}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Address:</span>
@@ -2228,20 +2381,8 @@ function viewMember(id) {
             <span class="detail-value">${escapeHtml(member.city || 'N/A')}, ${escapeHtml(member.state || '')} ${escapeHtml(member.zip || '')}</span>
         </div>
         <div class="detail-row">
-            <span class="detail-label">From Area:</span>
-            <span class="detail-value">${escapeHtml(member.fromarea || 'N/A')}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Club:</span>
-            <span class="detail-value">${escapeHtml(member.club || 'N/A')}</span>
-        </div>
-        <div class="detail-row">
             <span class="detail-label">Mailing List:</span>
             <span class="detail-value">${escapeHtml(member.mailing_list || 'N/A')}</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-label">Full/Part:</span>
-            <span class="detail-value">${escapeHtml(member.fulltime_parttime || 'N/A')}</span>
         </div>
         <div class="detail-row">
             <span class="detail-label">Approved:</span>
@@ -2251,6 +2392,12 @@ function viewMember(id) {
             <span class="detail-label">Tags:</span>
             <span class="detail-value">${renderTags(member.tags)}</span>
         </div>
+        ${isAdmin() && member.notes ? `
+        <div class="detail-row" style="margin-top: 10px; background: #fff3cd; padding: 8px; border-radius: 4px;">
+            <span class="detail-label">Notes (Admin):</span>
+            <span class="detail-value">${escapeHtml(member.notes)}</span>
+        </div>
+        ` : ''}
         <div class="detail-row" style="margin-top: 20px; color: #666; font-size: 0.9em;">
             <span class="detail-label">Date Created:</span>
             <span class="detail-value">${member.created_at ? new Date(member.created_at).toLocaleDateString() : 'N/A'}</span>
@@ -2383,7 +2530,6 @@ function updateEmailFields() {
         body = body.replace(/{{first_name}}/g, currentMember.first_name || '');
         body = body.replace(/{{last_name}}/g, currentMember.last_name || '');
         body = body.replace(/{{email}}/g, currentMember.email || '');
-        body = body.replace(/{{club}}/g, currentMember.club || '');
         subject = subject.replace(/{{first_name}}/g, currentMember.first_name || '');
         subject = subject.replace(/{{last_name}}/g, currentMember.last_name || '');
     }
@@ -2461,6 +2607,84 @@ function renderEmailLog() {
             <div class="email-log-body">${log.body || ''}</div>
         </div>
     `).join('');
+}
+
+async function showMemberEmailHistory(memberId) {
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+    
+    const memberEmail = member.email || '';
+    
+    try {
+        const response = await fetch(`${API_URL}/email-logs/member/${memberId}?email=${encodeURIComponent(memberEmail)}`);
+        currentMemberEmailLogs = await response.json();
+    } catch (error) {
+        console.error('Error loading member email history:', error);
+        currentMemberEmailLogs = emailLogs.filter(
+            log => log.memberId === memberId || log.to === memberEmail
+        );
+    }
+    
+    const titleEl = document.querySelector('#emailLogModal .modal-header h2');
+    if (titleEl) {
+        titleEl.textContent = `Email History - ${member.first_name} ${member.last_name}`;
+    }
+    
+    renderMemberEmailLogs();
+    openModal('emailLogModal');
+}
+
+function renderMemberEmailLogs() {
+    const container = document.getElementById('emailLogList');
+    
+    if (currentMemberEmailLogs.length === 0) {
+        container.innerHTML = '<p class="empty-state">No emails have been sent to this member yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = currentMemberEmailLogs.map((log, index) => {
+        const isHtml = log.body && /<[a-z][\s\S]*>/i.test(log.body);
+        const plainPreview = isHtml ? stripHtmlForPreview(log.body) : (log.body || '');
+        const preview = plainPreview.substring(0, 150) + (plainPreview.length > 150 ? '...' : '');
+        const statusBadge = log.simulated
+            ? '<span class="email-type-badge" style="background:#fff9e6; color:#b9770e; border:1px solid #f1c40f;">Simulated</span>'
+            : '<span class="email-type-badge" style="background:#eafaf1; color:#1e8449; border:1px solid #27ae60;">Sent</span>';
+        
+        return `
+            <div class="email-log-item">
+                <div class="email-log-header">
+                    <span class="email-log-date">${new Date(log.sentAt).toLocaleString()}</span>
+                    ${statusBadge}
+                </div>
+                <div class="email-log-subject"><strong>Subject:</strong> ${escapeHtml(log.subject || '(no subject)')}</div>
+                <div class="email-log-meta-row">
+                    <span>Template: <strong>${escapeHtml(log.templateName || 'Custom')}</strong></span>
+                    ${log.batchId ? `<span>Batch: ${escapeHtml(log.batchId)}</span>` : ''}
+                </div>
+                <div class="email-log-body-preview">${escapeHtml(preview)}</div>
+                <div class="email-log-body-full" id="emailBodyFull_${index}" style="display:none;">
+                    ${isHtml ? '<pre style="white-space:pre-wrap; margin:0; font-family:Arial, sans-serif;">' + escapeHtml(stripHtmlForPreview(log.body) || '') + '</pre>' : '<pre style="white-space:pre-wrap; margin:0; font-family:inherit;">' + escapeHtml(log.body || '') + '</pre>'}
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleMemberEmailBody(${index})" id="emailToggleBtn_${index}" style="margin-top:8px;">View Full Email</button>
+            </div>
+        `;
+    }).join('');
+}
+
+function stripHtmlForPreview(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+}
+
+function toggleMemberEmailBody(index) {
+    const bodyEl = document.getElementById('emailBodyFull_' + index);
+    const btnEl = document.getElementById('emailToggleBtn_' + index);
+    if (!bodyEl || !btnEl) return;
+    
+    const isVisible = bodyEl.style.display !== 'none';
+    bodyEl.style.display = isVisible ? 'none' : 'block';
+    btnEl.textContent = isVisible ? 'View Full Email' : 'Hide Full Email';
 }
 
 function closeEmailLogModal() {
@@ -2628,13 +2852,11 @@ function setupBulkEmailListeners() {
 
 async function loadBulkRecipients() {
     const tag = document.getElementById('bulkTagFilter').value;
-    const club = document.getElementById('bulkClubFilter').value;
     const search = document.getElementById('bulkSearch').value;
     
     try {
         const params = new URLSearchParams();
         if (tag) params.append('tag', tag);
-        if (club) params.append('club', club);
         if (search) params.append('search', search);
         
         const response = await fetch(`${API_URL}/recipients?${params.toString()}`);
@@ -2649,29 +2871,10 @@ async function loadBulkRecipients() {
 }
 
 function populateBulkFilters() {
-    // Get all unique tags from members
-    const allTags = new Set();
-    members.forEach(m => {
-        if (m.tags && Array.isArray(m.tags)) {
-            m.tags.forEach(tag => allTags.add(tag));
-        }
-    });
-    
     const tagFilter = document.getElementById('bulkTagFilter');
-    const sortedTags = Array.from(allTags).sort();
+    const sortedTags = getExistingTags();
     tagFilter.innerHTML = '<option value="">All Tags</option>' + 
         sortedTags.map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join('');
-    
-    // Get all unique clubs
-    const allClubs = new Set();
-    members.forEach(m => {
-        if (m.club) allClubs.add(m.club);
-    });
-    
-    const clubFilter = document.getElementById('bulkClubFilter');
-    const sortedClubs = Array.from(allClubs).sort();
-    clubFilter.innerHTML = '<option value="">All Clubs</option>' + 
-        sortedClubs.map(club => `<option value="${escapeHtml(club)}">${escapeHtml(club)}</option>`).join('');
 }
 
 function populateBulkTemplateDropdown() {
@@ -2689,7 +2892,7 @@ function renderBulkRecipients() {
     const tbody = document.getElementById('bulkRecipientsBody');
     
     if (bulkRecipients.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No eligible recipients found. Only members with mailing_list = "No" are excluded.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No eligible recipients found. Only members with mailing_list = "No" are excluded.</td></tr>';
         return;
     }
     
@@ -2700,7 +2903,6 @@ function renderBulkRecipients() {
                 <td><input type="checkbox" class="bulk-recipient-checkbox" data-id="${recipient.id}" ${isSelected ? 'checked' : ''}></td>
                 <td>${escapeHtml(recipient.first_name || '')} ${escapeHtml(recipient.last_name || '')}</td>
                 <td>${escapeHtml(recipient.email || '')}</td>
-                <td>${escapeHtml(recipient.club || '-')}</td>
                 <td>${renderTags(recipient.tags)}</td>
             </tr>
         `;
@@ -2817,7 +3019,6 @@ function bulkPreviewEmail() {
     previewBody = previewBody.replace(/{{first_name}}/g, firstRecipient.first_name || '');
     previewBody = previewBody.replace(/{{last_name}}/g, firstRecipient.last_name || '');
     previewBody = previewBody.replace(/{{email}}/g, firstRecipient.email || '');
-    previewBody = previewBody.replace(/{{club}}/g, firstRecipient.club || '');
     previewSubject = previewSubject.replace(/{{first_name}}/g, firstRecipient.first_name || '');
     previewSubject = previewSubject.replace(/{{last_name}}/g, firstRecipient.last_name || '');
     
@@ -3147,7 +3348,6 @@ function updateBulkProgressDisplay(current, total, status, batchCurrent = 0, bat
 
 function clearBulkFilters() {
     document.getElementById('bulkTagFilter').value = '';
-    document.getElementById('bulkClubFilter').value = '';
     document.getElementById('bulkSearch').value = '';
     loadBulkRecipients();
 }
@@ -3271,25 +3471,6 @@ function renderMapMarkers() {
         return;
     }
     
-    // Create custom icons for different clubs
-    const kivaIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-    });
-    
-    const mitaIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-    });
-    
     const defaultIcon = L.icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
@@ -3303,17 +3484,9 @@ function renderMapMarkers() {
     mapData.forEach((addressGroup, index) => {
         const { coordinates, members, address } = addressGroup;
         
-        // Determine icon based on members' clubs
-        // Priority: Kiva > Mita > None
-        const hasKiva = members.some(m => m.club === 'Kiva');
-        const hasMita = members.some(m => m.club === 'Mita');
-        let icon = defaultIcon;
-        if (hasKiva) icon = kivaIcon;
-        else if (hasMita) icon = mitaIcon;
-        
         const marker = L.marker(
             [coordinates.lat, coordinates.lng],
-            { icon }
+            { icon: defaultIcon }
         );
         
         // Create popup content
@@ -3373,7 +3546,6 @@ function updatePopupMemberDetails(groupId, memberId) {
             <div class="popup-detail"><strong>Name:</strong> ${escapeHtml(member.name)}</div>
             <div class="popup-detail"><strong>Email:</strong> ${escapeHtml(member.email || 'N/A')}</div>
             <div class="popup-detail"><strong>Phone:</strong> ${escapeHtml(member.phone || 'N/A')}</div>
-            <div class="popup-detail"><strong>Club:</strong> ${escapeHtml(member.club || 'None')}</div>
             <div class="popup-detail"><strong>Tags:</strong> ${member.tags && member.tags.length > 0 ? member.tags.map(t => escapeHtml(t)).join(', ') : 'None'}</div>
         `;
         
@@ -3391,7 +3563,6 @@ function createMemberDetailsHtml(member) {
     return `
         <div class="popup-detail"><strong>Email:</strong> ${escapeHtml(member.email || 'N/A')}</div>
         <div class="popup-detail"><strong>Phone:</strong> ${escapeHtml(member.phone || 'N/A')}</div>
-        <div class="popup-detail"><strong>Club:</strong> ${escapeHtml(member.club || 'None')}</div>
         <div class="popup-detail"><strong>Tags:</strong> ${member.tags && member.tags.length > 0 ? member.tags.map(t => escapeHtml(t)).join(', ') : 'None'}</div>
     `;
 }
@@ -3407,7 +3578,6 @@ function createSingleMemberPopup(member) {
         <div class="popup-detail"><strong>Name:</strong> ${escapeHtml(member.name)}</div>
         <div class="popup-detail"><strong>Email:</strong> ${escapeHtml(member.email || 'N/A')}</div>
         <div class="popup-detail"><strong>Phone:</strong> ${escapeHtml(member.phone || 'N/A')}</div>
-        <div class="popup-detail"><strong>Club:</strong> ${escapeHtml(member.club || 'None')}</div>
         <div class="popup-detail"><strong>Tags:</strong> ${member.tags && member.tags.length > 0 ? member.tags.map(t => escapeHtml(t)).join(', ') : 'None'}</div>
         <div class="popup-actions">
             ${popupActions}
@@ -3421,17 +3591,6 @@ function updateMapStats() {
     const totalMembersAtAddresses = mapData.reduce((sum, g) => sum + g.members.length, 0);
 
     document.getElementById('uniqueAddresses').textContent = mapData.length;
-    
-    // Count addresses with Kiva/Mita members
-    const kivaAddresses = mapData.filter(g => 
-        g.members.some(m => m.club === 'Kiva')
-    ).length;
-    const mitaAddresses = mapData.filter(g => 
-        g.members.some(m => m.club === 'Mita')
-    ).length;
-    
-    document.getElementById('kivaMembers').textContent = kivaAddresses;
-    document.getElementById('mitaMembers').textContent = mitaAddresses;
 }
 
 function setupMapEventListeners() {
@@ -3455,7 +3614,6 @@ function setupMapEventListeners() {
 
 async function applyMapFilters() {
     const filters = {
-        club: document.getElementById('mapClubFilter').value,
         tag: document.getElementById('mapTagFilter').value,
         approved: document.getElementById('mapApprovedFilter').value
     };
@@ -3464,7 +3622,6 @@ async function applyMapFilters() {
 }
 
 function clearMapFilters() {
-    document.getElementById('mapClubFilter').value = '';
     document.getElementById('mapTagFilter').value = '';
     document.getElementById('mapApprovedFilter').value = '';
     loadMapData();
@@ -3474,14 +3631,8 @@ function populateMapTagFilter() {
     const tagFilter = document.getElementById('mapTagFilter');
     if (!tagFilter) return;
     
-    const allTags = new Set();
-    members.forEach(m => {
-        if (m.tags && Array.isArray(m.tags)) {
-            m.tags.forEach(tag => allTags.add(tag));
-        }
-    });
+    const sortedTags = getExistingTags();
     
-    const sortedTags = Array.from(allTags).sort();
     tagFilter.innerHTML = '<option value="">All Tags</option>' +
         sortedTags.map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join('');
 }

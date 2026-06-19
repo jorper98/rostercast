@@ -51,7 +51,6 @@
                 <option value="first_name">First Name</option>
                 <option value="address">Address</option>
                 <option value="city">City</option>
-                <option value="club">Club</option>
             </select>
             <label for="sortOrder">Order:</label>
             <select id="sortOrder">
@@ -119,30 +118,9 @@
                         <input type="text" id="zip">
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="phone">Phone</label>
-                        <input type="tel" id="phone">
-                    </div>
-                    <div class="form-group">
-                        <label for="phone_2">Phone 2</label>
-                        <input type="tel" id="phone_2">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="club">Club</label>
-                        <select id="club">
-                            <option value="">Select Club</option>
-                            <option value="Kiva">Kiva</option>
-                            <option value="Mita">Mita</option>
-                            <option value="">None</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="fromarea">From Area</label>
-                        <input type="text" id="fromarea">
-                    </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -151,17 +129,6 @@
                             <option value="">Select</option>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="fulltime_parttime">Full/Part Time</label>
-                        <select id="fulltime_parttime">
-                            <option value="">Select</option>
-                            <option value="Full">Full</option>
-                            <option value="Part">Part</option>
-                            <option value="FT">FT</option>
-                            <option value="PT">PT</option>
-                            <option value="Unk">Unknown</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -174,8 +141,18 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="tags">Tags (comma separated)</label>
-                    <input type="text" id="tags" placeholder="e.g., volunteer, newsletter, events">
+                    <label>Tags</label>
+                    <div class="tag-autocomplete-container" id="tagAutocompleteContainer">
+                        <div class="tag-chips" id="tagChips"></div>
+                        <input type="text" id="tags" placeholder="Type to search or create a tag..." autocomplete="off" spellcheck="false">
+                        <div class="tag-suggestions" id="tagSuggestions" style="display:none;"></div>
+                    </div>
+                    <input type="hidden" id="memberTags">
+                    <p class="info-text">Start typing to match existing tags or type a new one and press Enter.</p>
+                </div>
+                <div class="form-group admin-only" id="notesGroup" style="display: none;">
+                    <label for="notes">Notes (Admin Only)</label>
+                    <textarea id="notes" rows="4" placeholder="Private admin notes..."></textarea>
                 </div>
                 <div class="form-group" id="sendWelcomeGroup" style="display: none;">
                     <div class="checkbox-item">
@@ -237,7 +214,7 @@
                     <label for="emailBodyEditor">Body</label>
                     <div id="emailBodyEditor"></div>
                     <input type="hidden" id="emailBody">
-                    <p class="info-text">Use {{first_name}}, {{last_name}}, {{email}}, {{club}} as placeholders.</p>
+                    <p class="info-text">Use {{first_name}}, {{last_name}}, {{email}} as placeholders.</p>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeSendEmailModal()">Cancel</button>

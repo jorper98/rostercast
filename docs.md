@@ -60,4 +60,4 @@ Copyright (c) 2026 Jorge Pereira (35sites.com LLC)
 
 ## Version
 
-v2.0.0
+v2.0.1

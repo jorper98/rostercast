@@ -3,11 +3,12 @@
   "fontSize": "16px",
   "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   "tableFields": [
-    "last_name",
     "first_name",
-    "address",
-    "fromarea",
-    "fulltime_parttime",
+    "last_name",
+    "approved",
+    "city",
+    "state",
+    "mailing_list",
     "tags"
   ],
   "welcomeTemplateId": "1",

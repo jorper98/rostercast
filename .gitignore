@@ -22,5 +22,6 @@ data/jobs/*
 data/pdfs/*
 !data/pdfs/.gitkeep
 data/email-logs.json
+data/error-log.txt
 logs/*.log
 *.log.*

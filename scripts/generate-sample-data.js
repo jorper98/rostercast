@@ -27,11 +27,8 @@ const CITIES = [
   { city: 'Tempe', state: 'AZ', zip: '85281', lat: 33.4255, lng: -111.9400 },
   { city: 'Chandler', state: 'AZ', zip: '85224', lat: 33.3062, lng: -111.8413 }
 ];
-
-const CLUBS = ['Kiva', 'Mita', ''];
 const APPROVED_VALUES = ['yes', 'no', ''];
 const MAILING_LIST_VALUES = ['Yes', 'No', ''];
-const FULLTIME_PARTTIME_VALUES = ['Full Time', 'Part Time', ''];
 const TAGS = ['social', 'events', 'newmembers', 'volunteers', 'board', 'twgwomenlrcgamenight'];
 
 function randomItem(arr) {
@@ -58,7 +55,6 @@ function generateSampleMembers(count = 24) {
     const lastName = randomItem(SAMPLE_LAST_NAMES);
     const location = randomItem(CITIES);
     const approved = randomItem(APPROVED_VALUES);
-    const club = randomItem(CLUBS);
     const memberTags = [];
 
     if (Math.random() > 0.5) {
@@ -77,13 +73,10 @@ function generateSampleMembers(count = 24) {
       state: location.state,
       zip: location.zip,
       phone: `555-${randomInt(100, 999)}-${randomInt(1000, 9999)}`,
-      phone_2: '',
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-      fromarea: randomItem(['WA', 'OR', 'CA', 'NV', '']),
-      club: club,
       mailing_list: randomItem(MAILING_LIST_VALUES),
-      fulltime_parttime: randomItem(FULLTIME_PARTTIME_VALUES),
       approved: approved,
+      notes: '',
       tags: [...new Set(memberTags)],
       coordinates: approved === 'yes' ? {
         lat: jitterCoordinate(location.lat, 0.08),

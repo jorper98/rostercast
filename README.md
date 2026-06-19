@@ -2,9 +2,27 @@
 
 ## Description
 
-A Node.js/Express member directory application designed for public read-only access. Visitors can browse approved member listings and an interactive map; administrators can authenticate for maintenance tasks. This public version excludes private contact details, email logs, backups, and production credentials.
+# RosterCast
 
-Version: v2.0.0
+
+RosterCast is a lightweight people roster and communication platform—not a CRM—built for organizations that need to organize contacts and send targeted communications without unnecessary complexity.
+
+RosterCast is an open-source contact and communication manager designed for coordinators, community leaders, nonprofits, clubs, and organizations that need a simple way to organize people and stay connected.
+
+
+With RosterCast, you can:
+
+- Manage a searchable people roster
+- Organize contacts with custom tags and interests
+- Create targeted email broadcasts and newsletters
+- Group people by interests, roles, or activities
+- Import and export contact information
+- Visualize communities with interactive maps
+- Keep communications and contact management in one place
+
+RosterCast focuses on simplicity: organize people, reach the right audience, and communicate without the complexity of a traditional CRM.
+
+Version: v2.0.1
 
 ## Application  Website
 to Review Applicaiton Information go to  

@@ -8,16 +8,15 @@
     "state": "AZ",
     "zip": "85374",
     "phone": "555-229-3461",
-    "phone_2": "",
     "email": "sutton.martin@example.com",
-    "fromarea": "OR",
-    "club": "",
-    "mailing_list": "",
+    "mailing_list": "Yes",
     "fulltime_parttime": "Full Time",
     "approved": "no",
     "tags": [],
     "coordinates": null,
-    "created_at": "2025-04-07T17:10:48.547Z"
+    "created_at": "2025-04-07T17:10:48.547Z",
+    "notes": "",
+    "updated_at": "2026-06-19T17:26:35.701Z"
   },
   {
     "id": 1781845002481,
@@ -28,12 +27,9 @@
     "state": "AZ",
     "zip": "85251",
     "phone": "555-602-4127",
-    "phone_2": "",
     "email": "drew.gonzalez@example.com",
-    "fromarea": "OR",
-    "club": "Mita",
-    "mailing_list": "",
-    "fulltime_parttime": "Full Time",
+    "mailing_list": "No",
+    "fulltime_parttime": "",
     "approved": "yes",
     "tags": [
       "board"
@@ -44,7 +40,9 @@
       "geocoded_at": "2026-01-16T20:21:16.413Z",
       "geocode_source": "sample"
     },
-    "created_at": "2025-01-25T20:04:23.895Z"
+    "created_at": "2025-01-25T20:04:23.895Z",
+    "notes": "",
+    "updated_at": "2026-06-19T16:49:01.313Z"
   },
   {
     "id": 1781845002482,
@@ -55,10 +53,7 @@
     "state": "AZ",
     "zip": "85001",
     "phone": "555-103-4397",
-    "phone_2": "",
     "email": "alex.white@example.com",
-    "fromarea": "CA",
-    "club": "",
     "mailing_list": "",
     "fulltime_parttime": "Full Time",
     "approved": "no",
@@ -66,7 +61,8 @@
       "board"
     ],
     "coordinates": null,
-    "created_at": "2024-02-05T20:55:59.884Z"
+    "created_at": "2024-02-05T20:55:59.884Z",
+    "notes": ""
   },
   {
     "id": 1781845002483,
@@ -77,18 +73,22 @@
     "state": "AZ",
     "zip": "85374",
     "phone": "555-505-9780",
-    "phone_2": "",
     "email": "dakota.gonzalez@example.com",
-    "fromarea": "WA",
-    "club": "Mita",
     "mailing_list": "Yes",
     "fulltime_parttime": "",
     "approved": "",
     "tags": [
       "newmembers"
     ],
-    "coordinates": null,
-    "created_at": "2025-06-03T13:15:23.205Z"
+    "coordinates": {
+      "lat": 33.4977546710864,
+      "lng": -111.92502638964277,
+      "geocoded_at": "2026-01-16T20:21:16.413Z",
+      "geocode_source": "sample"
+    },
+    "created_at": "2025-06-03T13:15:23.205Z",
+    "notes": "Lima",
+    "updated_at": "2026-06-19T13:49:55.392Z"
   },
   {
     "id": 1781845002484,
@@ -99,10 +99,7 @@
     "state": "AZ",
     "zip": "85251",
     "phone": "555-442-1091",
-    "phone_2": "",
     "email": "alex.johnson@example.com",
-    "fromarea": "NV",
-    "club": "Mita",
     "mailing_list": "No",
     "fulltime_parttime": "Full Time",
     "approved": "yes",
@@ -113,7 +110,8 @@
       "geocoded_at": "2025-12-16T07:15:41.982Z",
       "geocode_source": "sample"
     },
-    "created_at": "2026-05-25T19:03:19.964Z"
+    "created_at": "2026-05-25T19:03:19.964Z",
+    "notes": ""
   },
   {
     "id": 1781845002485,
@@ -124,10 +122,7 @@
     "state": "AZ",
     "zip": "85201",
     "phone": "555-111-2873",
-    "phone_2": "",
     "email": "marlowe.taylor@example.com",
-    "fromarea": "OR",
-    "club": "",
     "mailing_list": "Yes",
     "fulltime_parttime": "",
     "approved": "",
@@ -135,7 +130,8 @@
       "volunteers"
     ],
     "coordinates": null,
-    "created_at": "2025-02-27T01:28:38.861Z"
+    "created_at": "2025-02-27T01:28:38.861Z",
+    "notes": ""
   },
   {
     "id": 1781845002486,
@@ -146,10 +142,7 @@
     "state": "AZ",
     "zip": "85383",
     "phone": "555-118-2577",
-    "phone_2": "",
     "email": "finley.thompson@example.com",
-    "fromarea": "WA",
-    "club": "Mita",
     "mailing_list": "",
     "fulltime_parttime": "Part Time",
     "approved": "no",
@@ -157,7 +150,8 @@
       "volunteers"
     ],
     "coordinates": null,
-    "created_at": "2026-02-05T23:25:34.730Z"
+    "created_at": "2026-02-05T23:25:34.730Z",
+    "notes": ""
   },
   {
     "id": 1781845002487,
@@ -168,10 +162,7 @@
     "state": "AZ",
     "zip": "85201",
     "phone": "555-187-3321",
-    "phone_2": "",
     "email": "taylor.lee@example.com",
-    "fromarea": "OR",
-    "club": "Kiva",
     "mailing_list": "No",
     "fulltime_parttime": "Full Time",
     "approved": "",
@@ -179,7 +170,8 @@
       "volunteers"
     ],
     "coordinates": null,
-    "created_at": "2025-08-21T03:52:23.525Z"
+    "created_at": "2025-08-21T03:52:23.525Z",
+    "notes": ""
   },
   {
     "id": 1781845002488,
@@ -190,10 +182,7 @@
     "state": "AZ",
     "zip": "85383",
     "phone": "555-939-8969",
-    "phone_2": "",
     "email": "kendall.wilson@example.com",
-    "fromarea": "NV",
-    "club": "Kiva",
     "mailing_list": "No",
     "fulltime_parttime": "",
     "approved": "",
@@ -201,7 +190,8 @@
       "volunteers"
     ],
     "coordinates": null,
-    "created_at": "2025-03-06T07:08:47.629Z"
+    "created_at": "2025-03-06T07:08:47.629Z",
+    "notes": ""
   },
   {
     "id": 1781845002489,
@@ -212,10 +202,7 @@
     "state": "AZ",
     "zip": "85281",
     "phone": "555-513-4975",
-    "phone_2": "",
     "email": "skyler.hernandez@example.com",
-    "fromarea": "WA",
-    "club": "",
     "mailing_list": "No",
     "fulltime_parttime": "Part Time",
     "approved": "yes",
@@ -228,7 +215,8 @@
       "geocoded_at": "2025-04-14T05:22:23.686Z",
       "geocode_source": "sample"
     },
-    "created_at": "2025-09-22T10:47:27.471Z"
+    "created_at": "2025-09-22T10:47:27.471Z",
+    "notes": ""
   },
   {
     "id": 1781845002490,
@@ -239,10 +227,7 @@
     "state": "AZ",
     "zip": "85374",
     "phone": "555-215-7562",
-    "phone_2": "",
     "email": "hayden.moore@example.com",
-    "fromarea": "",
-    "club": "Kiva",
     "mailing_list": "",
     "fulltime_parttime": "Full Time",
     "approved": "",
@@ -250,7 +235,8 @@
       "events"
     ],
     "coordinates": null,
-    "created_at": "2025-10-26T23:34:37.962Z"
+    "created_at": "2025-10-26T23:34:37.962Z",
+    "notes": ""
   },
   {
     "id": 1781845002491,
@@ -261,10 +247,7 @@
     "state": "AZ",
     "zip": "85201",
     "phone": "555-316-5568",
-    "phone_2": "",
     "email": "sutton.rodriguez@example.com",
-    "fromarea": "WA",
-    "club": "Mita",
     "mailing_list": "No",
     "fulltime_parttime": "",
     "approved": "no",
@@ -272,7 +255,8 @@
       "volunteers"
     ],
     "coordinates": null,
-    "created_at": "2024-09-21T01:25:33.200Z"
+    "created_at": "2024-09-21T01:25:33.200Z",
+    "notes": ""
   },
   {
     "id": 1781845002492,
@@ -283,19 +267,23 @@
     "state": "AZ",
     "zip": "85201",
     "phone": "555-330-5333",
-    "phone_2": "",
     "email": "morgan.taylor@example.com",
-    "fromarea": "",
-    "club": "",
     "mailing_list": "",
     "fulltime_parttime": "",
     "approved": "no",
     "tags": [
       "events",
-      "twgwomenlrcgamenight"
+      "womengamenight"
     ],
-    "coordinates": null,
-    "created_at": "2025-12-25T09:05:15.454Z"
+    "coordinates": {
+      "lat": 33.4977546710864,
+      "lng": -111.92502638964277,
+      "geocoded_at": "2026-01-16T20:21:16.413Z",
+      "geocode_source": "sample"
+    },
+    "created_at": "2025-12-25T09:05:15.454Z",
+    "notes": "",
+    "updated_at": "2026-06-19T16:01:22.225Z"
   },
   {
     "id": 1781845002493,
@@ -306,10 +294,7 @@
     "state": "AZ",
     "zip": "85001",
     "phone": "555-247-8655",
-    "phone_2": "",
     "email": "reese.moore@example.com",
-    "fromarea": "CA",
-    "club": "Mita",
     "mailing_list": "Yes",
     "fulltime_parttime": "",
     "approved": "yes",
@@ -322,7 +307,8 @@
       "geocoded_at": "2025-08-15T05:00:44.996Z",
       "geocode_source": "sample"
     },
-    "created_at": "2024-11-27T00:48:50.746Z"
+    "created_at": "2024-11-27T00:48:50.746Z",
+    "notes": ""
   },
   {
     "id": 1781845002494,
@@ -333,18 +319,22 @@
     "state": "AZ",
     "zip": "85374",
     "phone": "555-253-6205",
-    "phone_2": "",
     "email": "jamie.williams@example.com",
-    "fromarea": "WA",
-    "club": "Kiva",
     "mailing_list": "No",
-    "fulltime_parttime": "Full Time",
+    "fulltime_parttime": "",
     "approved": "no",
     "tags": [
-      "twgwomenlrcgamenight"
+      "womengamenight"
     ],
-    "coordinates": null,
-    "created_at": "2025-04-29T17:00:53.067Z"
+    "coordinates": {
+      "lat": 33.4977546710864,
+      "lng": -111.92502638964277,
+      "geocoded_at": "2026-01-16T20:21:16.413Z",
+      "geocode_source": "sample"
+    },
+    "created_at": "2025-04-29T17:00:53.067Z",
+    "notes": "",
+    "updated_at": "2026-06-19T16:02:07.428Z"
   },
   {
     "id": 1781845002495,
@@ -355,10 +345,7 @@
     "state": "AZ",
     "zip": "85374",
     "phone": "555-826-2000",
-    "phone_2": "",
     "email": "rowan.perez@example.com",
-    "fromarea": "NV",
-    "club": "",
     "mailing_list": "No",
     "fulltime_parttime": "",
     "approved": "yes",
@@ -371,7 +358,8 @@
       "geocoded_at": "2025-01-26T01:15:23.341Z",
       "geocode_source": "sample"
     },
-    "created_at": "2025-07-29T10:57:30.507Z"
+    "created_at": "2025-07-29T10:57:30.507Z",
+    "notes": ""
   },
   {
     "id": 1781845002496,
@@ -382,10 +370,7 @@
     "state": "AZ",
     "zip": "85374",
     "phone": "555-290-7972",
-    "phone_2": "",
     "email": "emerson.white@example.com",
-    "fromarea": "NV",
-    "club": "",
     "mailing_list": "No",
     "fulltime_parttime": "Part Time",
     "approved": "",
@@ -393,7 +378,8 @@
       "newmembers"
     ],
     "coordinates": null,
-    "created_at": "2026-05-19T13:48:25.349Z"
+    "created_at": "2026-05-19T13:48:25.349Z",
+    "notes": ""
   },
   {
     "id": 1781845002497,
@@ -404,16 +390,20 @@
     "state": "AZ",
     "zip": "85301",
     "phone": "555-422-6951",
-    "phone_2": "",
     "email": "casey.gonzalez@example.com",
-    "fromarea": "OR",
-    "club": "Mita",
-    "mailing_list": "",
+    "mailing_list": "Yes",
     "fulltime_parttime": "",
-    "approved": "",
-    "tags": [],
-    "coordinates": null,
-    "created_at": "2024-10-12T19:15:14.261Z"
+    "approved": "yes",
+    "tags": [
+      "moviegoer"
+    ],
+    "coordinates": {
+      "lat": 33.60926249765205,
+      "lng": -112.27046340160497
+    },
+    "created_at": "2024-10-12T19:15:14.261Z",
+    "notes": "",
+    "updated_at": "2026-06-19T16:52:50.321Z"
   },
   {
     "id": 1781845002498,
@@ -424,10 +414,7 @@
     "state": "AZ",
     "zip": "85281",
     "phone": "555-638-7230",
-    "phone_2": "",
     "email": "taylor.martin@example.com",
-    "fromarea": "WA",
-    "club": "Kiva",
     "mailing_list": "",
     "fulltime_parttime": "Part Time",
     "approved": "yes",
@@ -438,7 +425,8 @@
       "geocoded_at": "2025-05-04T23:36:29.304Z",
       "geocode_source": "sample"
     },
-    "created_at": "2026-01-08T03:00:52.420Z"
+    "created_at": "2026-01-08T03:00:52.420Z",
+    "notes": ""
   },
   {
     "id": 1781845002499,
@@ -449,16 +437,20 @@
     "state": "AZ",
     "zip": "85281",
     "phone": "555-122-1802",
-    "phone_2": "",
     "email": "peyton.garcia@example.com",
-    "fromarea": "NV",
-    "club": "Mita",
-    "mailing_list": "No",
+    "mailing_list": "Yes",
     "fulltime_parttime": "",
-    "approved": "",
-    "tags": [],
-    "coordinates": null,
-    "created_at": "2024-10-25T08:22:01.266Z"
+    "approved": "yes",
+    "tags": [
+      "moviegoer"
+    ],
+    "coordinates": {
+      "lat": 33.60926249765205,
+      "lng": -112.27046340160497
+    },
+    "created_at": "2024-10-25T08:22:01.266Z",
+    "notes": "",
+    "updated_at": "2026-06-19T16:52:56.019Z"
   },
   {
     "id": 1781845002500,
@@ -469,10 +461,7 @@
     "state": "AZ",
     "zip": "85301",
     "phone": "555-709-8194",
-    "phone_2": "",
     "email": "cameron.taylor@example.com",
-    "fromarea": "WA",
-    "club": "Mita",
     "mailing_list": "No",
     "fulltime_parttime": "",
     "approved": "no",
@@ -480,7 +469,8 @@
       "social"
     ],
     "coordinates": null,
-    "created_at": "2025-08-14T13:11:59.567Z"
+    "created_at": "2025-08-14T13:11:59.567Z",
+    "notes": ""
   },
   {
     "id": 1781845002501,
@@ -489,25 +479,25 @@
     "address": "4021 Sample St",
     "city": "Peoria",
     "state": "AZ",
-    "zip": "85383",
-    "phone": "555-863-5101",
-    "phone_2": "",
-    "email": "sam.anderson@example.com",
-    "fromarea": "OR",
-    "club": "",
-    "mailing_list": "",
+    "zip": "",
+    "phone": "",
+    "email": "",
+    "mailing_list": "Yes",
     "fulltime_parttime": "",
     "approved": "yes",
     "tags": [
-      "newmembers"
+      "newmembers",
+      "board",
+      "scarystories",
+      "moviegoer"
     ],
     "coordinates": {
       "lat": 33.60926249765205,
-      "lng": -112.27046340160497,
-      "geocoded_at": "2025-11-19T06:20:23.814Z",
-      "geocode_source": "sample"
+      "lng": -112.27046340160497
     },
-    "created_at": "2025-07-30T05:16:09.285Z"
+    "created_at": "2025-07-30T05:16:09.285Z",
+    "updated_at": "2026-06-19T16:52:32.369Z",
+    "notes": ""
   },
   {
     "id": 1781845002502,
@@ -518,18 +508,21 @@
     "state": "AZ",
     "zip": "85301",
     "phone": "555-778-9666",
-    "phone_2": "",
     "email": "morgan.martinez@example.com",
-    "fromarea": "",
-    "club": "",
-    "mailing_list": "",
-    "fulltime_parttime": "Full Time",
-    "approved": "",
+    "mailing_list": "Yes",
+    "fulltime_parttime": "",
+    "approved": "yes",
     "tags": [
-      "social"
+      "social",
+      "moviegoer"
     ],
-    "coordinates": null,
-    "created_at": "2024-06-29T06:00:02.891Z"
+    "coordinates": {
+      "lat": 33.60926249765205,
+      "lng": -112.27046340160497
+    },
+    "created_at": "2024-06-29T06:00:02.891Z",
+    "notes": "",
+    "updated_at": "2026-06-19T16:52:42.671Z"
   },
   {
     "id": 1781845002503,
@@ -540,10 +533,7 @@
     "state": "AZ",
     "zip": "85374",
     "phone": "555-366-1851",
-    "phone_2": "",
     "email": "sage.lee@example.com",
-    "fromarea": "OR",
-    "club": "Mita",
     "mailing_list": "No",
     "fulltime_parttime": "Part Time",
     "approved": "yes",
@@ -556,6 +546,7 @@
       "geocoded_at": "2025-09-14T01:10:36.407Z",
       "geocode_source": "sample"
     },
-    "created_at": "2024-10-26T16:00:22.115Z"
+    "created_at": "2024-10-26T16:00:22.115Z",
+    "notes": ""
   }
 ]

@@ -219,15 +219,6 @@
             <div class="map-controls">
                 <div class="filter-controls">
                     <div class="filter-group">
-                        <label>Filter by Club:</label>
-                        <select id="mapClubFilter">
-                            <option value="">All Clubs</option>
-                            <option value="Kiva">Kiva</option>
-                            <option value="Mita">Mita</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
                         <label>Filter by Tag:</label>
                         <select id="mapTagFilter">
                             <option value="">All Tags</option>
@@ -261,14 +252,6 @@
                         <div class="stat-value" id="uniqueAddresses">0</div>
                         <div class="stat-label">UNIQUE ADDRESS<br> On Map</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="kivaMembers">0</div>
-                        <div class="stat-label">Kiva Club</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="mitaMembers">0</div>
-                        <div class="stat-label">Mita Club</div>
-                    </div>
                 </div>
                 
                 <!-- Map -->
@@ -277,7 +260,7 @@
             
             <!-- Map Legend -->
             <div class="map-legend-line">
-                <span>Map Legend:</span> <span style="color:#3498db;font-size:1.2em">●</span> Kiva Club Members | <span style="color:#e74c3c;font-size:1.2em">●</span> Mita Club Members | <span style="color:#95a5a6;font-size:1.2em">●</span> No Club Assigned
+                <span>Map Legend:</span> <span style="color:#95a5a6;font-size:1.2em">●</span> Members
             </div>
             
             <!-- Geocoding Tools (Admin Only) -->
@@ -372,25 +355,6 @@
                         <label for="phone">Phone</label>
                         <input type="tel" id="phone">
                     </div>
-                    <div class="form-group">
-                        <label for="phone_2">Phone 2</label>
-                        <input type="tel" id="phone_2">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="club">Club</label>
-                        <select id="club">
-                            <option value="">Select Club</option>
-                            <option value="Kiva">Kiva</option>
-                            <option value="Mita">Mita</option>
-                            <option value="">None</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="fromarea">From Area</label>
-                        <input type="text" id="fromarea">
-                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -399,17 +363,6 @@
                             <option value="">Select</option>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="fulltime_parttime">Full/Part Time</label>
-                        <select id="fulltime_parttime">
-                            <option value="">Select</option>
-                            <option value="Full">Full</option>
-                            <option value="Part">Part</option>
-                            <option value="FT">FT</option>
-                            <option value="PT">PT</option>
-                            <option value="Unk">Unknown</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -422,8 +375,18 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="tags">Tags (comma separated)</label>
-                    <input type="text" id="tags" placeholder="e.g., volunteer, newsletter, events">
+                    <label>Tags</label>
+                    <div class="tag-autocomplete-container" id="tagAutocompleteContainer">
+                        <div class="tag-chips" id="tagChips"></div>
+                        <input type="text" id="tags" placeholder="Type to search or create a tag..." autocomplete="off" spellcheck="false">
+                        <div class="tag-suggestions" id="tagSuggestions" style="display:none;"></div>
+                    </div>
+                    <input type="hidden" id="memberTags">
+                    <p class="info-text">Start typing to match existing tags or type a new one and press Enter.</p>
+                </div>
+                <div class="form-group admin-only" id="notesGroup" style="display: none;">
+                    <label for="notes">Notes (Admin Only)</label>
+                    <textarea id="notes" rows="4" placeholder="Private admin notes..."></textarea>
                 </div>
                 <div class="form-group" id="sendWelcomeGroup" style="display: none;">
                     <div class="checkbox-item">

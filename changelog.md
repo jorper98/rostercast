@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.0.1
+- Improved welcome email template with professional HTML design (gradient header, CTA button, responsive layout).
+- Added "Group Updates and News" email template with categorized news cards layout.
+- Added "Event Announcement" email template with date/time/location info blocks and RSVP button.
+- Updated `sendEmail()` to properly handle HTML template bodies without corrupting inline styles.
+- All new templates are responsive, email-client compatible, and include the standard footer.
+- Added "Email History" button to member detail view to see all emails sent to a member.
+- Added server endpoint `/api/email-logs/member/:memberId` for per-member email history.
+- Replaced plain text tags input with autocomplete (search/choose existing tags or create new ones).
+- Removed Full/Part Time and TWG Subgroups fields from member form, table, settings, and config migration.
+- Reorganized Settings page into tabs: General, Authentication, Email Configuration, Error Log, Landing Page.
+- Fixed modal close (×) button positioning to top-right corner across all modals.
+- Made modal buttons smaller and modals wider for better layout.
+- Fixed white-on-white button text in email templates (Get Started, RSVP Now buttons now black).
+- Fixed email history search bar misalignment (search icon and dropdown now properly aligned).
+- Updated email template signature to "Your Friendly Group Leader" with generic website link.
+- Updated email templates with richer sample content (5 news items, event agenda, cost/dress code fields).
+
 ## v2.0.0 
 - Released under the GNU Affero General Public License v3 (AGPL v3).
 - Bumped application version to v2.0.0 across all project files.

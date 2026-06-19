@@ -42,12 +42,6 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="bulkClubFilter">Filter by Club:</label>
-                    <select id="bulkClubFilter">
-                        <option value="">All Clubs</option>
-                    </select>
-                </div>
-                <div class="filter-group">
                     <label for="bulkSearch">Search:</label>
                     <input type="text" id="bulkSearch" placeholder="Name or email...">
                 </div>
@@ -70,12 +64,11 @@
                             <th><input type="checkbox" id="bulkSelectAllCheckbox"></th>
                             <th>Name</th>
                             <th>Email</th>
-                            <th>Club</th>
                             <th>Tags</th>
                         </tr>
                     </thead>
                     <tbody id="bulkRecipientsBody">
-                        <tr><td colspan="5" class="loading">Loading recipients...</td></tr>
+                        <tr><td colspan="4" class="loading">Loading recipients...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -107,7 +100,7 @@
                     <label>Message:</label>
                     <div id="bulkBodyEditor"></div>
                     <input type="hidden" id="bulkBody">
-                    <p class="info-text">Use {{first_name}}, {{last_name}}, {{email}}, {{club}} as placeholders. You can copy/paste formatted text from Word.</p>
+                    <p class="info-text">Use {{first_name}}, {{last_name}}, {{email}} as placeholders. You can copy/paste formatted text from Word.</p>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="bulkClearTemplateBtn">Clear Template</button>
@@ -259,7 +252,6 @@
             
             // Add live filter listeners
             document.getElementById('bulkTagFilter').addEventListener('change', loadBulkRecipients);
-            document.getElementById('bulkClubFilter').addEventListener('change', loadBulkRecipients);
             document.getElementById('bulkSearch').addEventListener('input', () => {
                 clearTimeout(window.bulkSearchTimeout);
                 window.bulkSearchTimeout = setTimeout(loadBulkRecipients, 300);

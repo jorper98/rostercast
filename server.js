@@ -355,13 +355,16 @@ if (!fs.existsSync(CONFIG_FILE)) {
         appName: "RosterCast",
         fontSize: "16px",
         fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        tableFields: ["last_name", "first_name", "address", "fromarea", "fulltime_parttime", "tags"]
+        tableFields: ["last_name", "first_name", "address", "tags"]
     };
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
 }
 
 // Initialize authentication AFTER config file exists
 initializeAuth();
+
+// One-time config migration (strip deprecated fields from tableFields)
+migrateConfig();
 
 // Check if authentication is enabled
 // Auth is enabled when at least one password is configured
@@ -596,6 +599,24 @@ function cleanupOldJobs(daysOld = 7) {
 cleanupOldJobs();
 
 // Read config file
+function migrateConfig() {
+    try {
+        if (!fs.existsSync(CONFIG_FILE)) return;
+        const data = fs.readFileSync(CONFIG_FILE, 'utf8');
+        const cfg = JSON.parse(data);
+        const removedFields = new Set(['fulltime_parttime', 'twg_subgroups']);
+        if (Array.isArray(cfg.tableFields)) {
+            const cleaned = cfg.tableFields.filter(f => !removedFields.has(f));
+            if (cleaned.length !== cfg.tableFields.length) {
+                cfg.tableFields = cleaned;
+                fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2));
+            }
+        }
+    } catch (error) {
+        console.error('Config migration error:', error.message);
+    }
+}
+
 function readConfig() {
     try {
         const data = fs.readFileSync(CONFIG_FILE, 'utf8');
@@ -767,6 +788,25 @@ function initializeEmail() {
     }
 }
 
+function isHtmlBody(body) {
+    return typeof body === 'string' && /<[a-z][\s\S]*>/i.test(body);
+}
+
+function stripHtmlForEmail(html) {
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+        .replace(/<\/div>\s*<div[^>]*>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
 // Helper function to send email
 async function sendEmail(to, subject, body) {
     if (!emailConfig) {
@@ -779,6 +819,9 @@ async function sendEmail(to, subject, body) {
         return { success: true, simulated: true };
     }
     
+    const htmlBody = isHtmlBody(body) ? body : body?.replace(/\n/g, '<br>');
+    const textBody = isHtmlBody(body) ? stripHtmlForEmail(body) : body;
+
     // Send via Mailgun if configured
     if (emailConfig.provider === 'mailgun' && mailgunClient) {
         try {
@@ -786,8 +829,8 @@ async function sendEmail(to, subject, body) {
                 from: emailConfig.mailgun?.from || emailConfig.from,
                 to,
                 subject,
-                text: body,
-                html: body?.replace(/\n/g, '<br>') || ''
+                text: textBody,
+                html: htmlBody || ''
             });
             debugLog('Email sent via Mailgun:', result.id);
             return { success: true, messageId: result.id };
@@ -808,8 +851,8 @@ async function sendEmail(to, subject, body) {
             from: emailConfig.from,
             to,
             subject,
-            text: body,
-            html: body?.replace(/\n/g, '<br>') || ''
+            text: textBody,
+            html: htmlBody || ''
         });
         debugLog('Email sent via SMTP:', info.messageId);
         return { success: true, messageId: info.messageId };
@@ -938,10 +981,7 @@ const PUBLIC_MEMBER_FIELDS = [
     'address',
     'city',
     'state',
-    'fromarea',
-    'club',
     'mailing_list',
-    'fulltime_parttime',
     'approved',
     'tags',
     'coordinates'
@@ -980,31 +1020,34 @@ function getPublicMembers(members) {
 
 // Get all members (auth OR public read-only when USER_PASSWORD is not set)
 app.get('/api/members', requireAuthOrPublicRead, (req, res) => {
-    const members = getPublicMembers(readMembers());
-    res.json(members);
+    const members = readMembers();
+    if (req.auth && req.auth.role === 'admin') {
+        res.json(members);
+    } else {
+        res.json(getPublicMembers(members));
+    }
 });
 
 // Search members (require authentication)
 app.get('/api/members/search', requireAuth, (req, res) => {
     const query = (req.query.q || '').toLowerCase();
     const members = readMembers();
-    
+    const isAdminRequest = req.auth && req.auth.role === 'admin';
+
     if (!query) {
-        return res.json(members);
+        return res.json(isAdminRequest ? members : members.map(sanitizeMemberForPublic));
     }
-    
-    const results = members.filter(member => 
+
+    const results = members.filter(member =>
         (member.first_name && member.first_name.toLowerCase().includes(query)) ||
         (member.last_name && member.last_name.toLowerCase().includes(query)) ||
         (member.email && member.email.toLowerCase().includes(query)) ||
-        (member.club && member.club.toLowerCase().includes(query)) ||
         (member.city && member.city.toLowerCase().includes(query)) ||
-        (member.fromarea && member.fromarea.toLowerCase().includes(query)) ||
-        (member.twg_subgroups && member.twg_subgroups.toLowerCase().includes(query)) ||
-        (member.tags && Array.isArray(member.tags) && member.tags.some(tag => tag.toLowerCase().includes(query)))
+        (member.tags && Array.isArray(member.tags) && member.tags.some(tag => tag.toLowerCase().includes(query))) ||
+        (isAdminRequest && member.notes && member.notes.toLowerCase().includes(query))
     );
-    
-    res.json(results);
+
+    res.json(isAdminRequest ? results : results.map(sanitizeMemberForPublic));
 });
 
 // Check if email already exists (MUST be before :id route) (require authentication)
@@ -1039,39 +1082,32 @@ app.get('/api/members/check-email', requireAuth, (req, res) => {
 // (auth OR public read-only when USER_PASSWORD is not set)
 app.get('/api/members/map-data', requireAuthOrPublicRead, (req, res) => {
     const members = readMembers();
-    const { club, tag, approved } = req.query;
-    
+    const { tag, approved } = req.query;
+
     // Filter members with coordinates
     let mapMembers = members.filter(m => m.coordinates && m.coordinates.lat && m.coordinates.lng);
-    
+
     // Apply filters
-    if (club) {
-        mapMembers = mapMembers.filter(m =>
-            m.club && m.club.toLowerCase() === club.toLowerCase()
-        );
-    }
-    
     if (tag) {
         mapMembers = mapMembers.filter(m =>
             m.tags && Array.isArray(m.tags) && m.tags.includes(tag)
         );
     }
-    
+
     if (approved) {
         mapMembers = mapMembers.filter(m => m.approved === approved);
     }
-    
+
     // Return minimal public map data
     const mapData = getPublicMembers(mapMembers).map(m => ({
         id: m.id,
         name: `${m.first_name || ''} ${m.last_name || ''}`.trim(),
         address: `${m.address || ''}, ${m.city || ''}, ${m.state || ''}`.replace(/,\s*$/, ''),
-        club: m.club,
         tags: m.tags,
         approved: m.approved,
         coordinates: m.coordinates
     }));
-    
+
     res.json(mapData);
 });
 
@@ -1261,19 +1297,24 @@ app.get('/api/members/:id', requireAuth, (req, res) => {
     const members = readMembers();
     const memberId = parseFloat(req.params.id);
     const member = members.find(m => m.id === memberId);
-    
+
     if (!member) {
         return res.status(404).json({ error: 'Member not found' });
     }
-    
-    res.json(member);
+
+    if (req.auth && req.auth.role === 'admin') {
+        res.json(member);
+    } else {
+        res.json(sanitizeMemberForPublic(member));
+    }
 });
 
 // Add new member
 app.post('/api/members', requireAuth, (req, res) => {
     const members = readMembers();
     const { email } = req.body;
-    
+    const isAdminRequest = req.auth && req.auth.role === 'admin';
+
     // Check for duplicate email (case-insensitive)
     if (email && email.trim() !== '') {
         const existingMember = members.find(m => 
@@ -1286,10 +1327,15 @@ app.post('/api/members', requireAuth, (req, res) => {
             });
         }
     }
-    
+
+    const body = { ...req.body };
+    if (!isAdminRequest) {
+        delete body.notes;
+    }
+
     const newMember = {
         id: Date.now(),
-        ...req.body,
+        ...body,
         created_at: new Date().toISOString()
     };
     
@@ -1304,12 +1350,18 @@ app.put('/api/members/:id', requireAuth, (req, res) => {
     const members = readMembers();
     const memberId = parseFloat(req.params.id);
     const index = members.findIndex(m => m.id === memberId);
-    
+    const isAdminRequest = req.auth && req.auth.role === 'admin';
+
     if (index === -1) {
         return res.status(404).json({ error: 'Member not found' });
     }
-    
-    members[index] = { ...members[index], ...req.body, updated_at: new Date().toISOString() };
+
+    const body = { ...req.body };
+    if (!isAdminRequest) {
+        delete body.notes;
+    }
+
+    members[index] = { ...members[index], ...body, updated_at: new Date().toISOString() };
     writeMembers(members);
     
     res.json(members[index]);
@@ -1354,13 +1406,10 @@ app.post('/api/import/csv', requireAuth, (req, res) => {
                 state: record.state || '',
                 zip: record.zip || '',
                 phone: record.phone || '',
-                phone_2: record.phone_2 || '',
                 email: record.email || '',
-                fromarea: record.fromarea || '',
-                club: record.club || '',
                 mailing_list: record.mailing_list || '',
-                fulltime_parttime: record.fulltime_parttime || '',
                 approved: record.approved || '',
+                notes: record.notes || '',
                 tags: [],
                 created_at: new Date().toISOString()
             };
@@ -1504,18 +1553,13 @@ app.get('/api/available-fields', requireAuth, (req, res) => {
         { value: 'last_name', label: 'Last Name' },
         { value: 'email', label: 'Email' },
         { value: 'phone', label: 'Phone' },
-        { value: 'phone_2', label: 'Phone 2' },
         { value: 'approved', label: 'Approved' },
-        { value: 'fromarea', label: 'From Area' },
         { value: 'tags', label: 'Tags' },
-        { value: 'club', label: 'Club' },
         { value: 'address', label: 'Address' },
         { value: 'city', label: 'City' },
         { value: 'state', label: 'State' },
         { value: 'zip', label: 'Zip' },
-        { value: 'mailing_list', label: 'Mailing List' },
-        { value: 'fulltime_parttime', label: 'Full/Part Time' },
-        { value: 'twg_subgroups', label: 'TWG Subgroups' }
+        { value: 'mailing_list', label: 'Mailing List' }
     ];
     res.json(fields);
 });
@@ -1544,7 +1588,6 @@ app.post('/api/send-email', requireAuth, async (req, res) => {
             emailBody = emailBody.replace(/{{first_name}}/g, memberData.first_name || '');
             emailBody = emailBody.replace(/{{last_name}}/g, memberData.last_name || '');
             emailBody = emailBody.replace(/{{email}}/g, memberData.email || '');
-            emailBody = emailBody.replace(/{{club}}/g, memberData.club || '');
             emailSubject = emailSubject.replace(/{{first_name}}/g, memberData.first_name || '');
             emailSubject = emailSubject.replace(/{{last_name}}/g, memberData.last_name || '');
         }
@@ -1944,6 +1987,18 @@ app.get('/api/email-logs', requireAuth, (req, res) => {
     res.json(logs);
 });
 
+app.get('/api/email-logs/member/:memberId', requireAuth, requireAdmin, (req, res) => {
+    const members = readMembers();
+    const memberId = parseInt(req.params.memberId);
+    const member = members.find(m => m.id === memberId);
+    if (!member || !member.email) {
+        return res.json([]);
+    }
+    const logs = readEmailLogs();
+    const filtered = logs.filter(log => log.memberId === memberId);
+    res.json(filtered);
+});
+
 // Get error log (admin only)
 app.get('/api/error-log', requireAuth, requireAdmin, (req, res) => {
     try {
@@ -1980,7 +2035,7 @@ app.delete('/api/error-log', requireAuth, requireAdmin, (req, res) => {
 // Get recipients eligible for bulk email (require authentication)
 app.get('/api/recipients', requireAuth, (req, res) => {
     const members = readMembers();
-    const { tag, club, search } = req.query;
+    const { tag, search } = req.query;
     
     // Filter to only include eligible recipients
     let eligibleMembers = members.filter(member => {
@@ -2002,14 +2057,6 @@ app.get('/api/recipients', requireAuth, (req, res) => {
         );
     }
     
-    // Filter by club
-    if (club) {
-        const clubLower = club.toLowerCase();
-        eligibleMembers = eligibleMembers.filter(member => 
-            member.club && member.club.toLowerCase() === clubLower
-        );
-    }
-    
     // Filter by search query
     if (search) {
         const searchLower = search.toLowerCase();
@@ -2026,7 +2073,6 @@ app.get('/api/recipients', requireAuth, (req, res) => {
         first_name: member.first_name,
         last_name: member.last_name,
         email: member.email,
-        club: member.club,
         tags: member.tags
     }));
     
@@ -2076,7 +2122,6 @@ async function processEmailBatch(members, batch, template, templateId, subject, 
             emailBody = emailBody.replace(/{{first_name}}/g, member.first_name || '');
             emailBody = emailBody.replace(/{{last_name}}/g, member.last_name || '');
             emailBody = emailBody.replace(/{{email}}/g, member.email || '');
-            emailBody = emailBody.replace(/{{club}}/g, member.club || '');
         }
         if (emailSubject) {
             emailSubject = emailSubject.replace(/{{first_name}}/g, member.first_name || '');

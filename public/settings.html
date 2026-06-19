@@ -108,6 +108,12 @@
             margin-top: 20px;
             text-align: right;
         }
+        .tab-content h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            color: #2c3e50;
+        }
     </style>
 </head>
 <body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
@@ -127,6 +133,9 @@
             <!-- Settings Tabs -->
             <div class="settings-tabs">
                 <button class="tab-button active" data-tab="general">General</button>
+                <button class="tab-button" data-tab="auth">Authentication</button>
+                <button class="tab-button" data-tab="email">Email Configuration</button>
+                <button class="tab-button" data-tab="errorlog">Error Log</button>
                 <button class="tab-button" data-tab="landing">Landing Page</button>
             </div>
             
@@ -166,7 +175,22 @@
                     </div>
                 </div>
                 
-                <h3 style="margin-top: 30px; margin-bottom: 15px;">Authentication</h3>
+                <div class="form-group">
+                    <label>Table Fields to Show</label>
+                    <div id="tableFieldsContainer" class="checkbox-grid">
+                        <!-- Fields will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </div>
+            </form>
+            </div>
+
+            <!-- Authentication Tab -->
+            <div id="authTab" class="tab-content">
+                <h3>Authentication</h3>
                 <p class="info-text">Changes take effect after clicking "Reload Auth Configuration" below.</p>
                 <div class="form-row">
                     <div class="form-group" style="flex: 1;">
@@ -192,8 +216,11 @@
                     <button type="button" class="btn btn-secondary" id="reloadAuthBtn">Reload Auth Configuration</button>
                     <p class="info-text">Click to apply authentication changes without restarting the server.</p>
                 </div>
-                
-                <h3 style="margin-top: 30px; margin-bottom: 15px;">Email Configuration</h3>
+            </div>
+
+            <!-- Email Configuration Tab -->
+            <div id="emailTab" class="tab-content">
+                <h3>Email Configuration</h3>
                 <p class="info-text" style="background-color: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
                     <strong>Security Notice:</strong> Credentials can be stored in .env file or config.json. 
                     <strong>config.json takes precedence over .env</strong> - values saved here will override .env settings. Do not commit credentials to version control.
@@ -280,28 +307,16 @@
                     <p class="info-text">Sends a test email using the SMTP settings above (does not save changes).</p>
                     <button type="button" class="btn btn-secondary" id="sendTestEmailBtn">Send Test Email</button>
                 </div>
-                
-                <div class="form-group">
-                    <label>Table Fields to Show</label>
-                    <div id="tableFieldsContainer" class="checkbox-grid">
-                        <!-- Fields will be populated dynamically -->
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <a href="index.html" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Save Settings</button>
-                </div>
-            </form>
-            
-            <!-- Error Log Section (Admin Only) -->
-            <div class="error-log-container" id="errorLogSection" style="display: none;">
+            </div>
+
+            <!-- Error Log Tab -->
+            <div id="errorlogTab" class="tab-content">
                 <h3>📋 Error Log</h3>
                 <p class="info-text">View error logs to diagnose issues with bulk emails and other operations.</p>
                 <button type="button" class="btn btn-secondary" id="viewErrorLogBtn">Load Error Log</button>
                 <button type="button" class="btn btn-danger" id="clearErrorLogBtn">Clear Error Log</button>
                 <div id="errorLogStatus"></div>
                 <textarea id="errorLogContent" readonly placeholder="Click 'Load Error Log' to view errors..."></textarea>
-            </div>
             </div>
             
             <!-- Landing Page Settings Tab -->
@@ -393,9 +408,6 @@
                     await reloadAllConfig();
                 });
             }
-            
-            // Show error log section for admins
-            showErrorLogSection();
             
             // Error log functionality
             const viewErrorLogBtn = document.getElementById('viewErrorLogBtn');
