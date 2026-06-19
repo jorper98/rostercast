@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Import - RosterCast</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div style="flex: 1;">
+        <div class="app-container">
+        <!-- Header rendered by app.js -->
+        <div id="headerContainer"></div>
+        
+        <div class="page-content">
+            <h2>📥 CSV Import</h2>
+            <p class="info-text">Import members from a CSV file. Expected columns: first_name, last_name, address, city, state, zip, phone, phone_2, email, fromarea, club, mailing_list, fulltime_parttime, approved, twg_subgroups, tags</p>
+            
+            <div class="tools-section" style="max-width: 500px;">
+                <form id="importForm">
+                    <div class="form-group">
+                        <label for="csvFile">CSV File</label>
+                        <input type="file" id="csvFile" accept=".csv">
+                    </div>
+                    <div class="form-actions">
+                        <a href="index.html" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Import CSV</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('importForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showToast('Please select a CSV file', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const csvContent = e.target.result;
+                
+                try {
+                    const response = await fetch(`${API_URL}/import/csv`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ csvContent })
+                    });
+                    
+                    const result = await response.json();
+                    showToast(result.message, 'success');
+                    document.getElementById('importForm').reset();
+                    // Redirect to members list
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    console.error('Error importing CSV:', error);
+                    showToast('Error importing CSV', 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html>

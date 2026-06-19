@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Map</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: calc(100% - 200px);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .map-controls {
+            margin-bottom: 15px;
+        }
+        
+        .map-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .map-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 180px;
+            flex-shrink: 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 12px 10px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 3px;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .leaflet-popup-content {
+            min-width: 220px;
+        }
+        
+        .popup-header {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        .popup-detail {
+            margin: 8px 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .popup-detail strong {
+            color: #666;
+            display: inline-block;
+            width: 70px;
+        }
+        
+        .popup-actions {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .geocode-tools {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            margin-top: 20px;
+        }
+        
+        .geocode-tools h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .geocode-tools p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #eee;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .progress-status {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .map-legend-line {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            color: #2c3e50;
+        }
+        
+        .map-legend-line span {
+            font-weight: 600;
+        }
+        
+        .map-legend-line .legend-separator {
+            margin: 0 8px;
+            color: #999;
+        }
+        
+        /* Responsive styles for mobile */
+        @media (max-width: 768px) {
+            #map {
+                height: 400px;
+                width: 100% !important;
+            }
+            
+            .map-container {
+                flex-direction: column !important;
+            }
+            
+            .map-stats {
+                width: 100% !important;
+                flex-direction: row !important;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .stat-card {
+                flex: 1;
+                min-width: 70px;
+                max-width: 100px;
+                padding: 8px 5px;
+            }
+            
+            .stat-value {
+                font-size: 1.2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.65rem;
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                width: 100%;
+            }
+            
+            .filter-group select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div style="flex: 1;">
+        <div class="app-container">
+        <!-- Header rendered by app.js -->
+        <div id="headerContainer"></div>
+        
+        <nav class="main-nav" id="sharedNavigation"></nav>
+        
+        <div class="page-content">
+            <!-- Map Controls -->
+            <div class="map-controls">
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label>Filter by Club:</label>
+                        <select id="mapClubFilter">
+                            <option value="">All Clubs</option>
+                            <option value="Kiva">Kiva</option>
+                            <option value="Mita">Mita</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Filter by Tag:</label>
+                        <select id="mapTagFilter">
+                            <option value="">All Tags</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label>Approved Status:</label>
+                        <select id="mapApprovedFilter">
+                            <option value="">All</option>
+                            <option value="yes">Approved</option>
+                            <option value="no">Not Approved</option>
+                        </select>
+                    </div>
+                    
+                    <button id="mapApplyFilters" class="btn btn-primary">Apply Filters</button>
+                    <button id="mapClearFilters" class="btn btn-secondary">Clear</button>
+                </div>
+            </div>
+            
+            <!-- Map Container with Stats -->
+            <div class="map-container">
+                <!-- Map Statistics (Left Side) -->
+                <div class="map-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalMembers">0</div>
+                        <div class="stat-label">Total Emails</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value" id="uniqueAddresses">0</div>
+                        <div class="stat-label">UNIQUE ADDRESS<br> On Map</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="kivaMembers">0</div>
+                        <div class="stat-label">Kiva Club</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="mitaMembers">0</div>
+                        <div class="stat-label">Mita Club</div>
+                    </div>
+                </div>
+                
+                <!-- Map -->
+                <div id="map"></div>
+            </div>
+            
+            <!-- Map Legend -->
+            <div class="map-legend-line">
+                <span>Map Legend:</span> <span style="color:#3498db;font-size:1.2em">●</span> Kiva Club Members | <span style="color:#e74c3c;font-size:1.2em">●</span> Mita Club Members | <span style="color:#95a5a6;font-size:1.2em">●</span> No Club Assigned
+            </div>
+            
+            <!-- Geocoding Tools (Admin Only) -->
+            <div id="geocodeTools" class="geocode-tools" style="display:none">
+                <h3>🌍 Geocoding Tools</h3>
+                <p>Members without coordinates need to be geocoded to appear on the map. This process converts addresses to map coordinates.</p>
+                <button id="geocodeAllBtn" class="btn btn-primary">Geocode All Members</button>
+                <button id="checkStatsBtn" class="btn btn-secondary">Check Geocoding Status</button>
+                
+                <div id="geocodeProgress" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="geocodeProgressFill" class="progress-fill">0%</div>
+                    </div>
+                    <p id="geocodeStatus" class="progress-status">Processing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <!-- View Member Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Member Details</h2>
+                <button class="close-btn" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div id="memberDetails">
+                <!-- Member details will be rendered here -->
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+                <button type="button" class="btn btn-secondary" onclick="viewCurrentMemberOnMap()">📍 View on Map</button>
+                <button type="button" class="btn btn-primary" id="sendWelcomeBtn">Send Email</button>
+                <button type="button" class="btn btn-edit" onclick="editCurrentMember()">Edit</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Member Modal -->
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Member</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="memberForm">
+                <input type="hidden" id="memberId">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email">
+                    <div id="emailWarning" class="form-warning" style="display: none;"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name">First Name *</label>
+                        <input type="text" id="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name *</label>
+                        <input type="text" id="last_name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address">
+                </div>
+                <div class="form-group" id="geocodeBtnContainer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="regeocodeCurrentMember()">📍 Get Coordinates</button>
+                </div>
+                <div class="form-group" id="coordinatesDisplay" style="display: none;">
+                    <label style="font-size: 0.75em; color: #888;">Coordinates</label>
+                    <div id="coordinatesInfo" style="font-size: 0.75em; color: #888; padding: 5px; background: #f5f5f5; border-radius: 4px;"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city">
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <input type="text" id="state">
+                    </div>
+                    <div class="form-group">
+                        <label for="zip">Zip</label>
+                        <input type="text" id="zip">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_2">Phone 2</label>
+                        <input type="tel" id="phone_2">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="club">Club</label>
+                        <select id="club">
+                            <option value="">Select Club</option>
+                            <option value="Kiva">Kiva</option>
+                            <option value="Mita">Mita</option>
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fromarea">From Area</label>
+                        <input type="text" id="fromarea">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mailing_list">Mailing List</label>
+                        <select id="mailing_list">
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fulltime_parttime">Full/Part Time</label>
+                        <select id="fulltime_parttime">
+                            <option value="">Select</option>
+                            <option value="Full">Full</option>
+                            <option value="Part">Part</option>
+                            <option value="FT">FT</option>
+                            <option value="PT">PT</option>
+                            <option value="Unk">Unknown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="approved">Approved</label>
+                        <select id="approved">
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tags">Tags (comma separated)</label>
+                    <input type="text" id="tags" placeholder="e.g., volunteer, newsletter, events">
+                </div>
+                <div class="form-group" id="sendWelcomeGroup" style="display: none;">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="sendWelcomeEmail">
+                        <label for="sendWelcomeEmail">Send welcome email to this member</label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Show geocode tools only for admin users
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof isAdmin === 'function' && isAdmin()) {
+                document.getElementById('geocodeTools').style.display = 'block';
+            }
+        });
+    </script>
+</div>
+
+
+    </div>
+</body>
+</html>

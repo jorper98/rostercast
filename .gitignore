@@ -1,0 +1,26 @@
+node_modules/
+.env
+.env.*
+!.env.sample
+.vscode/
+.idea/
+.data/
+.1devnotes
+.DS_Store
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Runtime-generated directories and files
+data/backups/*
+!data/backups/.gitkeep
+data/uploads/*
+!data/uploads/.gitkeep
+data/jobs/*
+!data/jobs/.gitkeep
+data/pdfs/*
+!data/pdfs/.gitkeep
+data/email-logs.json
+logs/*.log
+*.log.*

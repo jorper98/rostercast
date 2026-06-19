@@ -1,0 +1,14 @@
+services:
+  app:
+    image: ghcr.io/jorper98/rostercast:latest
+    container_name: membership-app
+    env_file:
+      - .env.production
+    ports:
+      - "${APP_PORT:-3032}:3032"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3032/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

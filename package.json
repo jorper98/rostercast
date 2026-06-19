@@ -1,0 +1,27 @@
+{
+  "name": "rostercast",
+  "version": "2.0.0",
+  "description": "RosterCast member directory web app",
+  "main": "server.js",
+  "docker": {
+    "registry": "ghcr.io/jorper98/",
+    "imageName": "rostercast"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "sample-data": "node scripts/generate-sample-data.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.5.2",
+    "dotenv": "^17.2.3",
+    "ejs": "^4.0.1",
+    "express": "^4.18.2",
+    "mailgun.js": "^12.6.1",
+    "multer": "^2.0.2",
+    "node-geocoder": "^4.4.1",
+    "nodemailer": "^9.0.1"
+  }
+}

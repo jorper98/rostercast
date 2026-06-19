@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RosterCast</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Quill Editor CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        /* Quill editor custom styles */
+        #emailBodyEditor {
+            height: 250px;
+            font-family: inherit;
+            font-size: 14px;
+            background: white;
+        }
+        .ql-toolbar {
+            font-family: inherit;
+        }
+        .ql-container {
+            font-family: inherit;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div style="flex: 1;">
+        <div class="app-container">
+            <!-- Header rendered by app.js -->
+            <div id="headerContainer"></div>
+        
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search members..." autocomplete="off">
+            <span class="search-icon">🔍</span>
+            <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">Clear Filters</button>
+        </div>
+        
+        <!-- Tag Filter -->
+        <div class="tag-filter" id="tagFilter"></div>
+        
+        <div class="stats-bar">
+            <span id="memberCount">0 members</span>
+        </div>
+        
+        <div class="sort-controls">
+            <label for="sortBy">Sort by:</label>
+            <select id="sortBy">
+                <option value="last_name">Last Name</option>
+                <option value="first_name">First Name</option>
+                <option value="address">Address</option>
+                <option value="city">City</option>
+                <option value="club">Club</option>
+            </select>
+            <label for="sortOrder">Order:</label>
+            <select id="sortOrder">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+            <button id="addMemberBtn" class="btn btn-primary">+ Add Member</button>
+        </div>
+        
+        <div class="members-list" id="membersList">
+            <!-- Members will be rendered here -->
+        </div>
+        
+        <div class="pagination" id="pagination">
+            <!-- Pagination controls -->
+        </div>
+    </div>
+    
+    <!-- Add/Edit Member Modal -->
+    <div id="memberModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Member</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="memberForm">
+                <input type="hidden" id="memberId">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email">
+                    <div id="emailWarning" class="form-warning" style="display: none;"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name">First Name *</label>
+                        <input type="text" id="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name *</label>
+                        <input type="text" id="last_name" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address">
+                </div>
+                <div class="form-group" id="geocodeBtnContainer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="regeocodeCurrentMember()">📍 Get Coordinates</button>
+                </div>
+                <div class="form-group" id="coordinatesDisplay" style="display: none;">
+                    <label style="font-size: 0.75em; color: #888;">Coordinates</label>
+                    <div id="coordinatesInfo" style="font-size: 0.75em; color: #888; padding: 5px; background: #f5f5f5; border-radius: 4px;"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city">
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <input type="text" id="state">
+                    </div>
+                    <div class="form-group">
+                        <label for="zip">Zip</label>
+                        <input type="text" id="zip">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_2">Phone 2</label>
+                        <input type="tel" id="phone_2">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="club">Club</label>
+                        <select id="club">
+                            <option value="">Select Club</option>
+                            <option value="Kiva">Kiva</option>
+                            <option value="Mita">Mita</option>
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fromarea">From Area</label>
+                        <input type="text" id="fromarea">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mailing_list">Mailing List</label>
+                        <select id="mailing_list">
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fulltime_parttime">Full/Part Time</label>
+                        <select id="fulltime_parttime">
+                            <option value="">Select</option>
+                            <option value="Full">Full</option>
+                            <option value="Part">Part</option>
+                            <option value="FT">FT</option>
+                            <option value="PT">PT</option>
+                            <option value="Unk">Unknown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="approved">Approved</label>
+                        <select id="approved">
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tags">Tags (comma separated)</label>
+                    <input type="text" id="tags" placeholder="e.g., volunteer, newsletter, events">
+                </div>
+                <div class="form-group" id="sendWelcomeGroup" style="display: none;">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="sendWelcomeEmail">
+                        <label for="sendWelcomeEmail">Send welcome email to this member</label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- View Member Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Member Details</h2>
+                <button class="close-btn" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div id="memberDetails">
+                <!-- Member details will be rendered here -->
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+                <button type="button" class="btn btn-secondary" onclick="viewCurrentMemberOnMap()">📍 View on Map</button>
+                <button type="button" class="btn btn-primary" id="sendWelcomeBtn">Send Email</button>
+                <button type="button" class="btn btn-edit" onclick="editCurrentMember()">Edit</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Send Email Modal -->
+    <div id="sendEmailModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Send Email</h2>
+                <button class="close-btn" onclick="closeSendEmailModal()">&times;</button>
+            </div>
+            <form id="sendEmailForm">
+                <input type="hidden" id="emailMemberId">
+                <div class="form-group">
+                    <label for="emailTo">To</label>
+                    <input type="email" id="emailTo" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="emailTemplate">Select Template</label>
+                    <select id="emailTemplate">
+                        <option value="">Select a template</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="emailSubject">Subject</label>
+                    <input type="text" id="emailSubject" placeholder="Email subject">
+                </div>
+                <div class="form-group">
+                    <label for="emailBodyEditor">Body</label>
+                    <div id="emailBodyEditor"></div>
+                    <input type="hidden" id="emailBody">
+                    <p class="info-text">Use {{first_name}}, {{last_name}}, {{email}}, {{club}} as placeholders.</p>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeSendEmailModal()">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="previewEmail()">Preview</button>
+                    <button type="submit" class="btn btn-primary">Send Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Email Log Modal -->
+    <div id="emailLogModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Email History</h2>
+                <button class="close-btn" onclick="closeEmailLogModal()">&times;</button>
+            </div>
+            <div id="emailLogList" class="email-log-list">
+                <!-- Email logs will be rendered here -->
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEmailLogModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Email Preview Modal -->
+    <div id="emailPreviewModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Email Preview</h2>
+                <button class="close-btn" onclick="closeEmailPreviewModal()">&times;</button>
+            </div>
+            <div class="preview-content">
+                <div class="preview-section">
+                    <h4>To:</h4>
+                    <p id="previewEmailTo"></p>
+                </div>
+                <div class="preview-section">
+                    <h4>Subject:</h4>
+                    <p id="previewEmailSubject"></p>
+                </div>
+                <div class="preview-section">
+                    <h4>Body:</h4>
+                    <div id="previewEmailBody"></div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEmailPreviewModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+    
+    <script src="app.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        // Initialize Quill editor for individual email
+        let emailQuill = null;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Quill editor after DOM is ready
+            emailQuill = new Quill('#emailBodyEditor', {
+                theme: 'snow',
+                placeholder: 'Compose your email here... You can copy/paste from Word with formatting preserved.',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link'],
+                        ['clean']
+                    ]
+                }
+            });
+            window.emailQuill = emailQuill;
+        });
+    </script>
+</div>
+
+
+    </div>
+</body>
+</html>
+</html>

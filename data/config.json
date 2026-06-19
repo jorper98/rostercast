@@ -1,0 +1,25 @@
+{
+  "appName": "RosterCast",
+  "fontSize": "16px",
+  "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  "tableFields": [
+    "last_name",
+    "first_name",
+    "address",
+    "fromarea",
+    "fulltime_parttime",
+    "tags"
+  ],
+  "welcomeTemplateId": "1",
+  "autoSendWelcome": false,
+  "emailConfig": {
+    "enableEmail": false,
+    "provider": "smtp",
+    "host": "",
+    "port": 587,
+    "secure": false,
+    "user": "",
+    "pass": "",
+    "from": "RosterCast <your-email@example.com>"
+  }
+}

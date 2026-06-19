@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Email - RosterCast</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Quill Editor CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        #bulkBodyEditor {
+            height: 200px;
+            font-family: inherit;
+            font-size: 14px;
+            background: white;
+        }
+        .ql-toolbar {
+            font-family: inherit;
+        }
+        .ql-container {
+            font-family: inherit;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div style="flex: 1;">
+        <div class="app-container">
+        <!-- Header rendered by app.js -->
+        <div id="headerContainer"></div>
+        
+        <div class="page-content">
+            <h2>📧 Bulk Email</h2>
+            <p class="info-text">Send emails to multiple members. Only members with mailing_list = "No" are excluded from the list.</p>
+            
+            <!-- Filter Controls -->
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="bulkTagFilter">Filter by Tag:</label>
+                    <select id="bulkTagFilter">
+                        <option value="">All Tags</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="bulkClubFilter">Filter by Club:</label>
+                    <select id="bulkClubFilter">
+                        <option value="">All Clubs</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="bulkSearch">Search:</label>
+                    <input type="text" id="bulkSearch" placeholder="Name or email...">
+                </div>
+                <button type="button" class="btn btn-secondary" id="bulkApplyFilters">Apply</button>
+                <button type="button" class="btn btn-secondary" id="bulkClearFilters">Clear Filters</button>
+            </div>
+            
+            <!-- Selection Controls -->
+            <div class="selection-controls">
+                <button type="button" class="btn btn-link" id="bulkSelectAll">Select All</button>
+                <button type="button" class="btn btn-link" id="bulkSelectNone">Clear All Recipients</button>
+                <span id="bulkSelectedCount">0 selected</span>
+            </div>
+            
+            <!-- Recipient List -->
+            <div class="recipient-list-container">
+                <table class="data-table" id="bulkRecipientsTable">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="bulkSelectAllCheckbox"></th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Club</th>
+                            <th>Tags</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bulkRecipientsBody">
+                        <tr><td colspan="5" class="loading">Loading recipients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Email Composition -->
+            <div class="bulk-email-compose">
+                <h4>Compose Email</h4>
+                <div class="form-group">
+                    <label for="bulkTemplate">Template (optional):</label>
+                    <select id="bulkTemplate">
+                        <option value="">No template (custom message)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bulkBatchSize">Batch Size:</label>
+                    <select id="bulkBatchSize">
+                        <option value="50">50 emails/batch</option>
+                        <option value="100" selected>100 emails/batch</option>
+                        <option value="150">150 emails/batch</option>
+                        <option value="200">200 emails/batch</option>
+                    </select>
+                    <p class="info-text">Smaller batches = more reliable. For 600 emails: 6 batches of 100.</p>
+                </div>
+                <div class="form-group">
+                    <label for="bulkSubject">Subject:</label>
+                    <input type="text" id="bulkSubject" placeholder="Email subject...">
+                </div>
+                <div class="form-group">
+                    <label>Message:</label>
+                    <div id="bulkBodyEditor"></div>
+                    <input type="hidden" id="bulkBody">
+                    <p class="info-text">Use {{first_name}}, {{last_name}}, {{email}}, {{club}} as placeholders. You can copy/paste formatted text from Word.</p>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="bulkClearTemplateBtn">Clear Template</button>
+                    <button type="button" class="btn btn-secondary" id="bulkPreviewBtn">Preview</button>
+                    <button type="button" class="btn btn-primary" id="bulkSendBtn">Send to Selected (<span id="bulkSendCount">0</span>)</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+        
+        <!-- Bulk Email Preview Modal -->
+        <div id="bulkPreviewModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Email Preview</h3>
+                    <button type="button" class="modal-close" id="bulkPreviewClose">&times;</button>
+                </div>
+                <div class="modal-body" id="bulkPreviewContent">
+                    <!-- Preview content will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="bulkPreviewCancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="bulkPreviewConfirm">Send Email</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Email Progress Modal -->
+        <div id="bulkProgressModal" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3>📧 Sending Bulk Email</h3>
+                </div>
+                <div class="modal-body">
+                    <div id="bulkProgressStatus">Preparing to send...</div>
+                    <div class="progress-container" style="margin-top: 15px;">
+                        <div id="bulkProgressBar" class="progress-bar" style="width: 0%; background-color: #4CAF50; height: 20px; border-radius: 4px; transition: width 0.3s;"></div>
+                    </div>
+                    <div id="bulkProgressPercent" style="text-align: center; margin-top: 10px; font-weight: bold;">0%</div>
+                    <div id="bulkProgressDetail" style="text-align: center; margin-top: 5px; color: #666;">Email 0 of 0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Email Job Complete Modal -->
+        <div id="bulkJobCompleteModal" class="modal">
+            <div class="modal-content" style="max-width: 450px; text-align: center;">
+                <div class="modal-header">
+                    <h3 style="color: #4CAF50;">✅ Bulk Email Complete</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="bulkJobSuccessMessage" style="font-size: 1.1em; margin: 20px 0;"></p>
+                    <p id="bulkJobStats" style="color: #666; font-size: 0.9em;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="bulkJobContinueBtn">OK - Continue</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Email Job Error Modal -->
+        <div id="bulkJobErrorModal" class="modal">
+            <div class="modal-content" style="max-width: 450px; text-align: center;">
+                <div class="modal-header">
+                    <h3 style="color: #f44336;">❌ Job Failed</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="bulkJobErrorMessage" style="font-size: 1.1em; margin: 20px 0;"></p>
+                    <p id="bulkJobErrorDetail" style="color: #666; font-size: 0.9em;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="bulkJobRetryBtn">Retry</button>
+                    <button type="button" class="btn btn-primary" id="bulkJobDismissBtn">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        // Initialize Quill editor for bulk email
+        let bulkQuill = null;
+        
+        // Override functions to use Quill editor
+        function getBulkBodyContent() {
+            if (bulkQuill) {
+                let content = bulkQuill.root.innerHTML;
+                if (!content || content === '<p><br></p>') {
+                    content = bulkQuill.getText();
+                }
+                return content;
+            }
+            return '';
+        }
+        
+        function setBulkBodyContent(html) {
+            if (bulkQuill) {
+                if (html && !html.includes('<')) {
+                    // Plain text - convert to HTML paragraphs
+                    html = html.split('\n').map(line => line ? `<p>${escapeHtml(line)}</p>` : '<p><br></p>').join('');
+                }
+                bulkQuill.clipboard.dangerouslyPasteHTML(html || '');
+            }
+        }
+        
+        function clearBulkBody() {
+            if (bulkQuill) {
+                bulkQuill.setContents([]);
+            }
+        }
+        
+        // Initialize for bulk email page
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Quill editor
+            bulkQuill = new Quill('#bulkBodyEditor', {
+                theme: 'snow',
+                placeholder: 'Compose your email here... You can copy/paste from Word with formatting preserved.',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['link'],
+                        ['clean']
+                    ]
+                }
+            });
+            window.bulkQuill = bulkQuill;
+            
+            // Initialize shared navigation first
+            initSharedNavigation();
+            
+            // Load templates and members first
+            await loadTemplates();
+            await loadMembers();
+
+            // Show email status badge for admins
+            if (typeof updateEmailStatusBadge === 'function') {
+                await updateEmailStatusBadge();
+            }
+            populateBulkTemplateDropdown();
+            populateBulkFilters();
+            loadBulkRecipients();
+            
+            // Add live filter listeners
+            document.getElementById('bulkTagFilter').addEventListener('change', loadBulkRecipients);
+            document.getElementById('bulkClubFilter').addEventListener('change', loadBulkRecipients);
+            document.getElementById('bulkSearch').addEventListener('input', () => {
+                clearTimeout(window.bulkSearchTimeout);
+                window.bulkSearchTimeout = setTimeout(loadBulkRecipients, 300);
+            });
+            
+            // Apply and Clear filter buttons
+            document.getElementById('bulkApplyFilters').addEventListener('click', loadBulkRecipients);
+            document.getElementById('bulkClearFilters').addEventListener('click', clearBulkFilters);
+            
+            // Selection controls
+            document.getElementById('bulkSelectAll').addEventListener('click', () => bulkSelectAll(true));
+            document.getElementById('bulkSelectNone').addEventListener('click', () => bulkSelectAll(false));
+            document.getElementById('bulkSelectAllCheckbox').addEventListener('change', (e) => {
+                bulkSelectAll(e.target.checked);
+            });
+            
+            // Template selection - fill subject and content when template is selected
+            document.getElementById('bulkTemplate').addEventListener('change', updateBulkEmailFields);
+            
+            // Clear Template button
+            document.getElementById('bulkClearTemplateBtn').addEventListener('click', clearBulkTemplate);
+            
+            // Preview and Send buttons
+            document.getElementById('bulkPreviewBtn').addEventListener('click', bulkPreviewEmail);
+            document.getElementById('bulkSendBtn').addEventListener('click', bulkSendEmail);
+            
+            // Preview modal controls
+            document.getElementById('bulkPreviewClose').addEventListener('click', closeBulkPreviewModal);
+            document.getElementById('bulkPreviewCancel').addEventListener('click', closeBulkPreviewModal);
+            document.getElementById('bulkPreviewConfirm').addEventListener('click', confirmBulkSend);
+            
+            // Job complete modal - Continue button
+            document.getElementById('bulkJobContinueBtn').addEventListener('click', () => {
+                document.getElementById('bulkJobCompleteModal').classList.remove('active');
+                // Optionally reload the page or redirect
+                window.location.reload();
+            });
+            
+            // Job error modal controls
+            document.getElementById('bulkJobRetryBtn').addEventListener('click', () => {
+                document.getElementById('bulkJobErrorModal').classList.remove('active');
+            });
+            document.getElementById('bulkJobDismissBtn').addEventListener('click', () => {
+                document.getElementById('bulkJobErrorModal').classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>

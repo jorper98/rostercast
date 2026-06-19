@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - RosterCast</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .error-log-container {
+            margin-top: 30px;
+            padding: 15px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .error-log-container h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        #errorLogContent {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+        .log-actions {
+            margin-top: 10px;
+        }
+        #errorLogStatus {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Tabs styles */
+        .settings-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            margin-right: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        .tab-button:hover {
+            background: #e9e9e9;
+        }
+        .tab-button.active {
+            background: #fff;
+            border-color: #ddd;
+            border-bottom: 1px solid #fff;
+            color: #007bff;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            background: #fff;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Landing page content styles */
+        .content-editor-container {
+            margin-top: 30px;
+        }
+        #contentEditor {
+            width: 100%;
+            height: 400px;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .preview-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .preview-container h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        #contentPreview {
+            background: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+        .form-actions {
+            margin-top: 20px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div style="flex: 1;">
+        <div class="app-container">
+        <!-- Header rendered by app.js -->
+        <div id="headerContainer"></div>
+        
+        <div class="page-content">
+            <h2>Settings</h2>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <button type="button" class="btn btn-secondary" id="reloadAllConfigBtn">🔄 Reload All Configuration</button>
+                <p class="info-text">Click after editing config.json directly to apply all changes without restarting.</p>
+            </div>
+            
+            <!-- Settings Tabs -->
+            <div class="settings-tabs">
+                <button class="tab-button active" data-tab="general">General</button>
+                <button class="tab-button" data-tab="landing">Landing Page</button>
+            </div>
+            
+            <!-- General Settings Tab -->
+            <div id="generalTab" class="tab-content active">
+                <form id="settingsForm">
+                <div class="form-group">
+                    <label for="configAppName">App Name</label>
+                    <input type="text" id="configAppName">
+                </div>
+                <div class="form-group">
+                    <label for="configFontSize">Font Size (px)</label>
+                    <input type="number" id="configFontSize" min="10" max="24" value="16">
+                </div>
+                <div class="form-group">
+                    <label for="configFontFamily">Font Family</label>
+                    <select id="configFontFamily">
+                        <option value="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">System Default (Recommended)</option>
+                        <option value="Inter, system-ui, sans-serif">Inter</option>
+                        <option value="Roboto, system-ui, sans-serif">Roboto</option>
+                        <option value="Arial, Helvetica, sans-serif">Arial (Web Safe)</option>
+                        <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                        <option value="Georgia, serif">Georgia (Serif)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="configWelcomeTemplate">Welcome Email Template</label>
+                    <select id="configWelcomeTemplate">
+                        <option value="">No auto-send</option>
+                    </select>
+                    <p class="info-text">Select a template for automatic welcome emails when members are approved.</p>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="configAutoSendWelcome">
+                        <label for="configAutoSendWelcome">Auto-send welcome email when member is approved</label>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 30px; margin-bottom: 15px;">Authentication</h3>
+                <p class="info-text">Changes take effect after clicking "Reload Auth Configuration" below.</p>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="configAdminPassword">Admin Password</label>
+                        <input type="password" id="configAdminPassword" placeholder="Enter new admin password">
+                        <div class="checkbox-item" style="margin-top: 5px;">
+                            <input type="checkbox" id="clearAdminPassword">
+                            <label for="clearAdminPassword">Clear password (disable auth)</label>
+                        </div>
+                        <p class="info-text">Required for full access. Leave blank to keep current.</p>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="configUserPassword">User Password</label>
+                        <input type="password" id="configUserPassword" placeholder="Enter new user password">
+                        <div class="checkbox-item" style="margin-top: 5px;">
+                            <input type="checkbox" id="clearUserPassword">
+                            <label for="clearUserPassword">Clear password</label>
+                        </div>
+                        <p class="info-text">Optional. If set, provides read-only access.</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-secondary" id="reloadAuthBtn">Reload Auth Configuration</button>
+                    <p class="info-text">Click to apply authentication changes without restarting the server.</p>
+                </div>
+                
+                <h3 style="margin-top: 30px; margin-bottom: 15px;">Email Configuration</h3>
+                <p class="info-text" style="background-color: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <strong>Security Notice:</strong> Credentials can be stored in .env file or config.json. 
+                    <strong>config.json takes precedence over .env</strong> - values saved here will override .env settings. Do not commit credentials to version control.
+                </p>
+                
+                <div class="form-group">
+                    <label for="configEmailProvider">Email Provider</label>
+                    <select id="configEmailProvider">
+                        <option value="smtp">SMTP (Traditional)</option>
+                        <option value="mailgun">Mailgun API (Recommended)</option>
+                    </select>
+                    <p class="info-text">Choose SMTP for traditional email sending, or Mailgun API for better deliverability.</p>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="configEnableEmail">
+                        <label for="configEnableEmail">Enable Email Sending</label>
+                    </div>
+                    <p class="info-text">Enable to send actual emails. When disabled, emails are only logged to console.</p>
+                </div>
+                
+                <!-- SMTP Configuration (shown when provider is 'smtp') -->
+                <div id="smtpConfigSection">
+                    <div class="form-group">
+                        <label for="configSmtpHost">SMTP Host</label>
+                        <input type="text" id="configSmtpHost" placeholder="smtp.mailgun.org">
+                        <p class="info-text">Set in config.json or edit directly here.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="configSmtpPort">SMTP Port</label>
+                            <input type="number" id="configSmtpPort" placeholder="587">
+                        </div>
+                        <div class="form-group">
+                            <label for="configSmtpSecure">
+                                <input type="checkbox" id="configSmtpSecure">
+                                Use SSL/TLS
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="configSmtpUser">SMTP Username</label>
+                        <input type="text" id="configSmtpUser" placeholder="your-email@gmail.com">
+                        <p class="info-text">Set in .env (SMTP_USERNAME) or config.json. Values in config.json take precedence.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="configSmtpPass">SMTP Password / App Password</label>
+                        <input type="password" id="configSmtpPass" placeholder="Your password or app password">
+                        <p class="info-text">Set in .env (SMTP_PASSWORD) or config.json. Values in config.json take precedence. For Gmail, use an <a href="https://myaccount.google.com/apppasswords" target="_blank">App Password</a> instead of your regular password.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="configEmailFrom">From Address</label>
+                        <input type="text" id="configEmailFrom" placeholder="RosterCast <your-email@gmail.com>">
+                        <p class="info-text">Set in config.json or edit directly here.</p>
+                    </div>
+                </div>
+                
+                <!-- Mailgun Configuration (shown when provider is 'mailgun') -->
+                <div id="mailgunConfigSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="configMailgunDomain">Mailgun Domain</label>
+                        <input type="text" id="configMailgunDomain" placeholder="mg.yourdomain.com">
+                        <p class="info-text">Your Mailgun domain (e.g., mg.yourdomain.com). Set in .env (MAILGUN_DOMAIN) or config.json.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="configMailgunApiKey">Mailgun API Key</label>
+                        <input type="password" id="configMailgunApiKey" placeholder="your-mailgun-api-key">
+                        <p class="info-text">Get your API key from <a href="https://app.mailgun.com/app/account/security" target="_blank">Mailgun Account Settings</a>. Set in .env (MAILGUN_API_KEY) or config.json.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="configMailgunFrom">From Address</label>
+                        <input type="text" id="configMailgunFrom" placeholder="RosterCast <members@yourdomain.com>">
+                        <p class="info-text">The email address to send from. Must be a verified sender in your Mailgun account. Set in .env (MAILGUN_FROM) or config.json.</p>
+                    </div>
+                </div>
+                
+                <div id="smtpEnvInfo" class="info-text" style="background-color: #d4edda; color: #155724; padding: 8px; border-radius: 4px; display: none;"></div>
+                <div id="mailgunEnvInfo" class="info-text" style="background-color: #d4edda; color: #155724; padding: 8px; border-radius: 4px; display: none;"></div>
+
+                <div class="form-group">
+                    <label for="configTestEmailTo">Test Email Recipient</label>
+                    <input type="email" id="configTestEmailTo" placeholder="you@example.com">
+                    <p class="info-text">Sends a test email using the SMTP settings above (does not save changes).</p>
+                    <button type="button" class="btn btn-secondary" id="sendTestEmailBtn">Send Test Email</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Table Fields to Show</label>
+                    <div id="tableFieldsContainer" class="checkbox-grid">
+                        <!-- Fields will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </div>
+            </form>
+            
+            <!-- Error Log Section (Admin Only) -->
+            <div class="error-log-container" id="errorLogSection" style="display: none;">
+                <h3>📋 Error Log</h3>
+                <p class="info-text">View error logs to diagnose issues with bulk emails and other operations.</p>
+                <button type="button" class="btn btn-secondary" id="viewErrorLogBtn">Load Error Log</button>
+                <button type="button" class="btn btn-danger" id="clearErrorLogBtn">Clear Error Log</button>
+                <div id="errorLogStatus"></div>
+                <textarea id="errorLogContent" readonly placeholder="Click 'Load Error Log' to view errors..."></textarea>
+            </div>
+            </div>
+            
+            <!-- Landing Page Settings Tab -->
+            <div id="landingTab" class="tab-content">
+                <h3>Landing Page Content</h3>
+                <p class="info-text">Edit the content displayed on the login page landing section.</p>
+                
+                <div class="content-editor-container">
+                    <label for="contentEditor">HTML Content</label>
+                    <textarea id="contentEditor" placeholder="Enter HTML content for the landing page"></textarea>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="previewBtn">Preview</button>
+                        <button type="button" class="btn btn-primary" id="saveLandingBtn">Save Changes</button>
+                    </div>
+                </div>
+                
+                <div class="preview-container">
+                    <h3>Preview</h3>
+                    <div id="contentPreview">Click Preview to see your changes</div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize tabs
+            initializeTabs();
+            
+            await loadConfig();
+            await loadAvailableFields();
+            await loadTemplates();
+            
+            // Load SMTP configuration from server (combines .env and config.json)
+            await loadSmtpConfig();
+            
+            // Populate form fields
+            populateFormFields();
+            
+            // Populate welcome template dropdown
+            populateWelcomeTemplateDropdown();
+            
+            // Render table fields checkboxes
+            renderTableFields();
+            
+            // Load landing page content
+            await loadLandingContent();
+            
+            // Settings form handler
+            document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveSettings();
+            });
+
+            // Test email button handler
+            const testBtn = document.getElementById('sendTestEmailBtn');
+            if (testBtn) {
+                testBtn.addEventListener('click', async () => {
+                    await sendTestEmailFromSettings();
+                });
+            }
+            
+            // Email provider change handler
+            const providerSelect = document.getElementById('configEmailProvider');
+            if (providerSelect) {
+                providerSelect.addEventListener('change', (e) => {
+                    toggleEmailConfigSections(e.target.value);
+                });
+            }
+            
+            // Reload auth button handler
+            const reloadAuthBtn = document.getElementById('reloadAuthBtn');
+            if (reloadAuthBtn) {
+                reloadAuthBtn.addEventListener('click', async () => {
+                    await reloadAuthConfig();
+                });
+            }
+            
+            // Reload all config button handler
+            const reloadAllConfigBtn = document.getElementById('reloadAllConfigBtn');
+            if (reloadAllConfigBtn) {
+                reloadAllConfigBtn.addEventListener('click', async () => {
+                    await reloadAllConfig();
+                });
+            }
+            
+            // Show error log section for admins
+            showErrorLogSection();
+            
+            // Error log functionality
+            const viewErrorLogBtn = document.getElementById('viewErrorLogBtn');
+            if (viewErrorLogBtn) {
+                viewErrorLogBtn.addEventListener('click', async () => {
+                    await loadErrorLog();
+                });
+            }
+            
+            const clearErrorLogBtn = document.getElementById('clearErrorLogBtn');
+            if (clearErrorLogBtn) {
+                clearErrorLogBtn.addEventListener('click', async () => {
+                    if (confirm('Are you sure you want to clear the error log?')) {
+                        await clearErrorLog();
+                    }
+                });
+            }
+            
+            // Landing page content handlers
+            document.getElementById('previewBtn').addEventListener('click', () => {
+                previewContent();
+            });
+            
+            document.getElementById('saveLandingBtn').addEventListener('click', async () => {
+                await saveLandingContent();
+            });
+        });
+        
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to selected button and content
+                    button.classList.add('active');
+                    document.getElementById(tabId + 'Tab').classList.add('active');
+                });
+            });
+        }
+        
+        async function loadLandingContent() {
+            try {
+                const response = await fetch('/api/landing-content');
+                if (response.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('contentEditor').value = data.content;
+                } else {
+                    console.error('Failed to load landing content');
+                }
+            } catch (error) {
+                console.error('Error loading landing content:', error);
+            }
+        }
+        
+        function previewContent() {
+            const content = document.getElementById('contentEditor').value;
+            const previewDiv = document.getElementById('contentPreview');
+            previewDiv.innerHTML = content;
+        }
+        
+        async function saveLandingContent() {
+            const content = document.getElementById('contentEditor').value;
+            
+            try {
+                const response = await fetch('/api/landing-content', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                if (response.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+                
+                if (response.ok) {
+                    showToast('Landing page content updated successfully');
+                } else {
+                    const error = await response.json();
+                    showToast('Failed to update landing page content: ' + error.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving landing content:', error);
+                showToast('Failed to update landing page content: ' + error.message, 'error');
+            }
+        }
+        
+        // Load email configuration from server
+        async function loadSmtpConfig() {
+            try {
+                const response = await fetch('/api/email/status');
+                if (response.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+                const status = await response.json();
+                
+                if (status.emailConfig) {
+                    const ec = status.emailConfig;
+                    document.getElementById('configEnableEmail').checked = ec.enableEmail || false;
+                    
+                    // Set provider
+                    const providerSelect = document.getElementById('configEmailProvider');
+                    providerSelect.value = ec.provider || 'smtp';
+                    
+                    // Show/hide config sections based on provider
+                    toggleEmailConfigSections(ec.provider || 'smtp');
+                    
+                    // SMTP config
+                    document.getElementById('configSmtpHost').value = ec.host || '';
+                    document.getElementById('configSmtpPort').value = ec.port || 587;
+                    document.getElementById('configSmtpSecure').checked = ec.secure || false;
+                    document.getElementById('configSmtpUser').value = ec.user || '';
+                    
+                    // SMTP password
+                    const passField = document.getElementById('configSmtpPass');
+                    if (ec.pass === '********') {
+                        passField.value = '********';
+                        passField.placeholder = 'Enter new password to change, or leave as ******** to keep current';
+                    } else {
+                        passField.value = '';
+                        passField.placeholder = 'Enter SMTP password';
+                    }
+                    
+                    // Mailgun config (nested in mailgun object)
+                    const mailgunConfig = ec.mailgun || {};
+                    document.getElementById('configMailgunDomain').value = mailgunConfig.domain || '';
+                    
+                    // Mailgun API key
+                    const mailgunApiKeyField = document.getElementById('configMailgunApiKey');
+                    if (mailgunConfig.apiKey === '********') {
+                        mailgunApiKeyField.value = '********';
+                        mailgunApiKeyField.placeholder = 'Enter new API key to change, or leave as ******** to keep current';
+                    } else {
+                        mailgunApiKeyField.value = '';
+                        mailgunApiKeyField.placeholder = 'Enter Mailgun API key';
+                    }
+                    
+                    // From address (common for both providers)
+                    document.getElementById('configEmailFrom').value = ec.from || '';
+                    
+                    // Show which SMTP settings come from .env
+                    if (status.smtpFromEnv) {
+                        const smtpEnvInfo = document.getElementById('smtpEnvInfo');
+                        if (smtpEnvInfo) {
+                            const envSources = [];
+                            if (status.smtpFromEnv.user) envSources.push('Username');
+                            if (status.smtpFromEnv.pass) envSources.push('Password');
+                            if (envSources.length > 0) {
+                                smtpEnvInfo.textContent = 'SMTP credentials loaded from .env: ' + envSources.join(', ');
+                                smtpEnvInfo.style.display = 'block';
+                            } else {
+                                smtpEnvInfo.style.display = 'none';
+                            }
+                        }
+                    } else {
+                        document.getElementById('smtpEnvInfo').style.display = 'none';
+                    }
+                    
+                    // Show which Mailgun settings come from .env
+                    if (status.mailgunFromEnv) {
+                        const mailgunEnvInfo = document.getElementById('mailgunEnvInfo');
+                        if (mailgunEnvInfo) {
+                            const envSources = [];
+                            if (status.mailgunFromEnv.apiKey) envSources.push('API Key');
+                            if (status.mailgunFromEnv.domain) envSources.push('Domain');
+                            if (envSources.length > 0) {
+                                mailgunEnvInfo.textContent = 'Mailgun settings loaded from .env: ' + envSources.join(', ');
+                                mailgunEnvInfo.style.display = 'block';
+                            } else {
+                                mailgunEnvInfo.style.display = 'none';
+                            }
+                        }
+                    } else {
+                        document.getElementById('mailgunEnvInfo').style.display = 'none';
+                    }
+
+                    // Baseline for diff-based saving - SMTP
+                    window.smtpFormBaseline = {
+                        enableEmail: !!ec.enableEmail,
+                        provider: ec.provider || 'smtp',
+                        // SMTP
+                        host: ec.host || '',
+                        port: Number(ec.port || 587),
+                        secure: !!ec.secure,
+                        user: ec.user || '',
+                        pass: ec.pass || '',
+                        from: ec.from || ''
+                    };
+                    
+                    // Baseline for diff-based saving - Mailgun
+                    window.mailgunFormBaseline = {
+                        enableEmail: !!ec.enableEmail,
+                        provider: ec.provider || 'smtp',
+                        // Mailgun
+                        apiKey: mailgunConfig.apiKey || '',
+                        domain: mailgunConfig.domain || '',
+                        from: mailgunConfig.from || ec.from || ''
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading email config:', error);
+            }
+        }
+        
+        // Toggle email config sections based on provider
+        function toggleEmailConfigSections(provider) {
+            const smtpSection = document.getElementById('smtpConfigSection');
+            const mailgunSection = document.getElementById('mailgunConfigSection');
+            
+            if (provider === 'mailgun') {
+                smtpSection.style.display = 'none';
+                mailgunSection.style.display = 'block';
+            } else {
+                smtpSection.style.display = 'block';
+                mailgunSection.style.display = 'none';
+            }
+        }
+        
+        // Populate form fields with config data
+        function populateFormFields() {
+            if (config) {
+                document.getElementById('configAppName').value = config.appName || '';
+                document.getElementById('configFontSize').value = (config.fontSize || '16px').replace('px', '');
+                document.getElementById('configFontFamily').value = config.fontFamily || 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                document.getElementById('configWelcomeTemplate').value = config.welcomeTemplateId || '';
+                document.getElementById('configAutoSendWelcome').checked = config.autoSendWelcome || false;
+            }
+        }
+        
+        // Populate welcome template dropdown
+        function populateWelcomeTemplateDropdown() {
+            const welcomeTemplateSelect = document.getElementById('configWelcomeTemplate');
+            templates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                welcomeTemplateSelect.appendChild(option);
+            });
+            if (config && config.welcomeTemplateId) {
+                welcomeTemplateSelect.value = config.welcomeTemplateId;
+            }
+        }
+    </script>
+</body>
+</html>

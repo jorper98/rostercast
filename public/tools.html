@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools - RosterCast</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div style="flex: 1;">
+        <div class="app-container">
+        <!-- Header rendered by app.js -->
+        <div id="headerContainer"></div>
+        
+        <div class="page-content">
+            <h2>⚙️ Tools</h2>
+            
+            <div class="tools-grid">
+                <a href="bulk-email.html" class="tool-card">
+                    <div class="tool-icon">📧</div>
+                    <h3>Bulk Email</h3>
+                    <p>Send emails to multiple members with template support</p>
+                </a>
+                
+                <a href="csv-import.html" class="tool-card">
+                    <div class="tool-icon">📥</div>
+                    <h3>CSV Import</h3>
+                    <p>Import members from a CSV file</p>
+                </a>
+                
+                <a href="backup-restore.html" class="tool-card">
+                    <div class="tool-icon">💾</div>
+                    <h3>Backup / Restore</h3>
+                    <p>Create backups and restore data</p>
+                </a>
+                
+                <a href="templates.html" class="tool-card">
+                    <div class="tool-icon">📝</div>
+                    <h3>Email Templates</h3>
+                    <p>Create and manage email templates</p>
+                </a>
+                
+                <a href="email-history.html" class="tool-card">
+                    <div class="tool-icon">📋</div>
+                    <h3>Email History</h3>
+                    <p>View sent emails and their details</p>
+                </a>
+                
+                <a href="settings.html" class="tool-card">
+                    <div class="tool-icon">⚙️</div>
+                    <h3>Settings</h3>
+                    <p>Configure app settings and preferences</p>
+                </a>
+                
+                <a href="roster-pdf.html" class="tool-card">
+                    <div class="tool-icon">📄</div>
+                    <h3>Roster PDF</h3>
+                    <p>Generate a PDF roster of all members sorted by last name</p>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

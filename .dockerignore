@@ -1,0 +1,26 @@
+node_modules
+npm-debug.log
+.git
+.env
+.env.*
+!.env.sample
+.vscode
+.idea
+.DS_Store
+*.tmp
+*.log
+.data/
+plans/
+coverage/
+
+# Runtime-generated data directories
+data/backups/*
+!data/backups/.gitkeep
+data/uploads/*
+!data/uploads/.gitkeep
+data/jobs/*
+!data/jobs/.gitkeep
+data/pdfs/*
+!data/pdfs/.gitkeep
+data/email-logs.json
+logs/*.log

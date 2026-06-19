@@ -1,0 +1,8 @@
+[
+  {
+    "id": 1,
+    "name": "Welcome Template",
+    "subject": "Welcome to our group!",
+    "body": "Dear {{first_name}},\n\nWelcome to our group! We're thrilled to have you join us.\n\nBest regards,\nRosterCast Team"
+  }
+]

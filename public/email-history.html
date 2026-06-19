@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email History - RosterCast</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div style="flex: 1;">
+        <div class="app-container">
+        <!-- Header rendered by app.js -->
+        <div id="headerContainer"></div>
+        
+        <div class="page-content">
+            <div class="page-header">
+                <h2>Email History</h2>
+            </div>
+            
+            <div class="search-bar">
+                <div class="search-input-container">
+                    <input type="text" id="searchEmailLog" placeholder="Search email history..." autocomplete="off">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <select id="emailTypeFilter" class="email-type-filter">
+                    <option value="">All Emails</option>
+                    <option value="real">REAL (Sent)</option>
+                    <option value="sim">SIM (Simulated)</option>
+                </select>
+            </div>
+            
+            <div id="emailHistoryList">
+                <!-- Email history will be rendered here -->
+            </div>
+        </div>
+        
+        <!-- Email Detail Modal -->
+        <div id="emailDetailModal" class="modal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>Email Details</h2>
+                    <button class="close-btn" onclick="closeEmailDetailModal()">&times;</button>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-section">
+                        <h4>Date/Time:</h4>
+                        <p id="detailDateTime"></p>
+                    </div>
+                    <div class="preview-section">
+                        <h4>Sent To:</h4>
+                        <p id="detailTo"></p>
+                    </div>
+                    <div class="preview-section">
+                        <h4>Subject:</h4>
+                        <p id="detailSubject"></p>
+                    </div>
+                    <div class="preview-section">
+                        <h4>Template Used:</h4>
+                        <p id="detailTemplate"></p>
+                    </div>
+                    <div class="preview-section">
+                        <h4>Member:</h4>
+                        <p id="detailMember"></p>
+                    </div>
+                    <div class="preview-section">
+                        <h4>Body:</h4>
+                        <div id="detailBody"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEmailDetailModal()">Close</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recipients Modal -->
+        <div id="recipientsModal" class="modal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 id="recipientsModalTitle">Recipients</h2>
+                    <button class="close-btn" onclick="closeRecipientsModal()">&times;</button>
+                </div>
+                <div class="batch-recipient-list" id="recipientsList"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeRecipientsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadEmailLogs();
+            renderEmailHistory();
+            setupEmailHistorySearch();
+            setupEmailTypeFilter();
+        });
+        
+        function setupEmailTypeFilter() {
+            const typeFilter = document.getElementById('emailTypeFilter');
+            if (typeFilter) {
+                typeFilter.addEventListener('change', (e) => {
+                    filterEmailHistoryByType(e.target.value);
+                });
+            }
+        }
+        
+        function filterEmailHistoryByType(type) {
+            const searchInput = document.getElementById('searchEmailLog');
+            const searchQuery = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            let filtered = emailLogs;
+            
+            // Filter by type (simulated vs real)
+            if (type === 'sim') {
+                filtered = filtered.filter(log => log.simulated === true);
+            } else if (type === 'real') {
+                filtered = filtered.filter(log => log.simulated !== true);
+            }
+            
+            // Apply search filter
+            if (searchQuery) {
+                filtered = filtered.filter(log => 
+                    (log.to && log.to.toLowerCase().includes(searchQuery)) ||
+                    (log.subject && log.subject.toLowerCase().includes(searchQuery)) ||
+                    (log.memberName && log.memberName.toLowerCase().includes(searchQuery)) ||
+                    (log.templateName && log.templateName.toLowerCase().includes(searchQuery))
+                );
+            }
+            
+            renderEmailHistory(filtered);
+        }
+        
+        function setupEmailHistorySearch() {
+            const searchInput = document.getElementById('searchEmailLog');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const typeFilter = document.getElementById('emailTypeFilter');
+                    const type = typeFilter ? typeFilter.value : '';
+                    
+                    // First filter by type, then by search
+                    let filtered = emailLogs;
+                    
+                    if (type === 'sim') {
+                        filtered = filtered.filter(log => log.simulated === true);
+                    } else if (type === 'real') {
+                        filtered = filtered.filter(log => log.simulated !== true);
+                    }
+                    
+                    // Apply search filter
+                    const searchLower = e.target.value.toLowerCase();
+                    if (searchLower) {
+                        filtered = filtered.filter(log => 
+                            (log.to && log.to.toLowerCase().includes(searchLower)) ||
+                            (log.subject && log.subject.toLowerCase().includes(searchLower)) ||
+                            (log.memberName && log.memberName.toLowerCase().includes(searchLower)) ||
+                            (log.templateName && log.templateName.toLowerCase().includes(searchLower))
+                        );
+                    }
+                    
+                    renderEmailHistory(filtered);
+                });
+            }
+        }
+        
+        function renderEmailHistory(logs = emailLogs) {
+            const container = document.getElementById('emailHistoryList');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No email history found.</p></div>';
+                return;
+            }
+            
+            // Group logs by batchId
+            const batchedLogs = groupLogsByBatch(logs);
+            
+            container.innerHTML = `
+                <table class="members-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Date/Time</th>
+                            <th>Sent To</th>
+                            <th>Subject</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${batchedLogs.map(batch => renderBatchRow(batch)).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        // Group logs by batchId
+        function groupLogsByBatch(logs) {
+            const batches = {};
+            
+            logs.forEach(log => {
+                const batchId = log.batchId || `single-${log.id}`;
+                if (!batches[batchId]) {
+                    batches[batchId] = {
+                        batchId: log.batchId,
+                        isSingle: !log.batchId,
+                        logs: [],
+                        sentAt: log.sentAt,
+                        subject: log.subject,
+                        templateName: log.templateName,
+                        simulated: log.simulated
+                    };
+                }
+                batches[batchId].logs.push(log);
+            });
+            
+            // Sort by most recent sentAt
+            return Object.values(batches).sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+        }
+        
+        // Render a batch row (collapsible)
+        function renderBatchRow(batch) {
+            const hasMultipleRecipients = batch.logs.length > 1;
+            const recipientCount = batch.logs.length;
+            const batchUniqueId = batch.batchId || `single-${batch.logs[0].id}`;
+            
+            const displayRecipients = hasMultipleRecipients 
+                ? `<a href="#" class="batch-link" onclick="showRecipientsModal('${batchUniqueId}'); return false;">
+                     ${recipientCount} recipients ↓
+                   </a>`
+                : escapeHtml(batch.logs[0].to);
+            
+            const batchLabel = batch.isSingle ? 'EMAIL' : 'BATCH';
+            
+            return `
+                <tr class="batch-header">
+                    <td><span class="email-type-badge ${batch.logs[0].simulated ? 'sim' : 'real'}">${batch.logs[0].simulated ? 'SIM' : 'REAL'}</span></td>
+                    <td>${new Date(batch.sentAt).toLocaleString()}</td>
+                    <td>${displayRecipients}</td>
+                    <td>${escapeHtml(batch.subject)}</td>
+                    <td onclick="event.stopPropagation()">
+                        ${hasMultipleRecipients 
+                            ? `<button class="btn btn-sm btn-secondary" onclick="viewBatchDetail('${batchUniqueId}')">View Details</button>`
+                            : `<button class="btn btn-sm btn-secondary" onclick="viewEmailDetail(${batch.logs[0].id})">View</button>`
+                        }
+                    </td>
+                </tr>
+            `;
+        }
+        
+
+        // View batch detail modal
+        function viewBatchDetail(batchId) {
+            // Find the batch
+            const batchedLogs = groupLogsByBatch(emailLogs);
+            const batch = batchedLogs.find(b => (b.batchId || `single-${b.logs[0].id}`) === batchId);
+            
+            if (!batch) return;
+            
+            document.getElementById('detailDateTime').textContent = new Date(batch.sentAt).toLocaleString();
+            
+            // Show recipient count link instead of listing all emails
+            const recipientCount = batch.logs.length;
+            document.getElementById('detailTo').innerHTML = 
+                `<a href="#" onclick="showRecipientsModal('${batchId}'); return false;">
+                    ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''} ↓
+                 </a>`;
+            
+            document.getElementById('detailSubject').textContent = batch.subject;
+            document.getElementById('detailTemplate').textContent = batch.templateName || 'None';
+            document.getElementById('detailMember').textContent = batch.logs.length > 1 
+                ? `${batch.logs.length} members` 
+                : (batch.logs[0].memberName || 'N/A');
+            document.getElementById('detailBody').innerHTML = batch.logs[0].body || '';
+            
+            openModal('emailDetailModal');
+        }
+        
+        // Show recipients in a separate modal
+        function showRecipientsModal(batchId) {
+            const batchedLogs = groupLogsByBatch(emailLogs);
+            const batch = batchedLogs.find(b => (b.batchId || `single-${b.logs[0].id}`) === batchId);
+            
+            if (!batch) return;
+            
+            document.getElementById('recipientsModalTitle').textContent = 
+                `Recipients (${batch.logs.length})`;
+            
+            document.getElementById('recipientsList').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Email</th>
+                            <th>Member</th>
+                            <th>Status</th>
+                            <th>Sent At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${batch.logs.map((log, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${escapeHtml(log.to)}</td>
+                                <td>${escapeHtml(log.memberName || 'N/A')}</td>
+                                <td><span class="recipient-status ${log.status}">${log.status}</span></td>
+                                <td>${new Date(log.sentAt).toLocaleTimeString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            openModal('recipientsModal');
+        }
+        
+        function closeRecipientsModal() {
+            document.getElementById('recipientsModal').classList.remove('active');
+        }
+        
+        function viewEmailDetail(id) {
+            const log = emailLogs.find(l => l.id === id);
+            if (!log) return;
+            
+            document.getElementById('detailDateTime').textContent = new Date(log.sentAt).toLocaleString();
+            document.getElementById('detailTo').textContent = log.to;
+            document.getElementById('detailSubject').textContent = log.subject;
+            document.getElementById('detailTemplate').textContent = log.templateName;
+            document.getElementById('detailMember').textContent = log.memberName;
+            
+            // Render body as HTML (from Quill editor)
+            document.getElementById('detailBody').innerHTML = log.body || '';
+            
+            openModal('emailDetailModal');
+        }
+        
+        function closeEmailDetailModal() {
+            document.getElementById('emailDetailModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
