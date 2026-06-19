@@ -106,3 +106,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 Copyright (c) 2026 Jorge Pereira (35sites.com LLC)
+
+## DISCLAIMER:  USE OF AI 
+
+This application was developed with the help of AI and AI Coding Agents 
